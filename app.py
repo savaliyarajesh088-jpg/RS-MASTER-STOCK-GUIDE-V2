@@ -23,318 +23,252 @@ st.set_page_config(
 
 
 # =========================================================
-# MOBILE + FULL COLOR UI
+# MOBILE COLOR UI
 # =========================================================
 
-st.markdown(
-    """
-    <style>
+st.markdown("""
+<style>
 
-    /* =========================
-       GLOBAL
-    ========================= */
+.stApp {
+    background: #050505;
+    color: #ffffff;
+}
 
-    .stApp {
-        background:
-            radial-gradient(
-                circle at top,
-                #171717 0%,
-                #080808 42%,
-                #030303 100%
-            );
-        color: #ffffff;
-    }
+.block-container {
+    max-width: 1250px;
+    padding: 0.35rem 0.35rem 1.2rem 0.35rem;
+}
+
+.main-title {
+    text-align: center;
+    font-size: 1.45rem;
+    font-weight: 950;
+    margin: 0;
+}
+
+.sub-title {
+    text-align: center;
+    font-size: 0.70rem;
+    opacity: 0.65;
+    margin-bottom: 0.45rem;
+}
+
+.stock-card {
+    background: linear-gradient(
+        145deg,
+        #111111,
+        #080808
+    );
+    border: 1px solid rgba(255,255,255,0.14);
+    border-radius: 18px;
+    padding: 12px;
+    margin-bottom: 14px;
+}
+
+.section-title {
+    font-size: 0.95rem;
+    font-weight: 900;
+    margin-top: 13px;
+    margin-bottom: 7px;
+}
+
+.score-card {
+    background: #111111;
+    border-radius: 16px;
+    padding: 13px;
+    text-align: center;
+    border: 1px solid rgba(255,255,255,0.12);
+}
+
+.score-title {
+    font-size: 0.68rem;
+    font-weight: 800;
+    opacity: 0.70;
+}
+
+.score-number {
+    font-size: 1.65rem;
+    font-weight: 950;
+}
+
+.score-bar {
+    width: 100%;
+    height: 8px;
+    background: #252525;
+    border-radius: 20px;
+    overflow: hidden;
+    margin-top: 8px;
+}
+
+.score-fill {
+    height: 100%;
+    border-radius: 20px;
+}
+
+.signal-card {
+    border-radius: 15px;
+    padding: 12px;
+    text-align: center;
+    font-weight: 950;
+    font-size: 1.02rem;
+    margin: 8px 0;
+}
+
+.signal-buy {
+    background: linear-gradient(
+        135deg,
+        rgba(0,220,100,.22),
+        rgba(0,150,70,.08)
+    );
+    border: 1px solid #00dc64;
+    color: #00ff77;
+}
+
+.signal-hold {
+    background: linear-gradient(
+        135deg,
+        rgba(0,170,255,.20),
+        rgba(0,100,180,.08)
+    );
+    border: 1px solid #00aaff;
+    color: #45c5ff;
+}
+
+.signal-wait {
+    background: linear-gradient(
+        135deg,
+        rgba(255,200,0,.20),
+        rgba(180,130,0,.08)
+    );
+    border: 1px solid #ffc400;
+    color: #ffd633;
+}
+
+.signal-reduce {
+    background: linear-gradient(
+        135deg,
+        rgba(255,152,0,.22),
+        rgba(180,80,0,.08)
+    );
+    border: 1px solid #ff9800;
+    color: #ffb13b;
+}
+
+.signal-exit {
+    background: linear-gradient(
+        135deg,
+        rgba(255,48,79,.24),
+        rgba(160,0,30,.08)
+    );
+    border: 1px solid #ff304f;
+    color: #ff5570;
+}
+
+.data-card {
+    background: #101010;
+    border: 1px solid rgba(255,255,255,0.09);
+    border-radius: 12px;
+    padding: 8px;
+    margin-bottom: 7px;
+}
+
+.data-label {
+    font-size: 0.62rem;
+    opacity: 0.62;
+    font-weight: 800;
+}
+
+.data-value {
+    font-size: 0.92rem;
+    font-weight: 900;
+}
+
+.bull {
+    color: #00e676;
+}
+
+.bear {
+    color: #ff3d5a;
+}
+
+.neutral {
+    color: #ffd740;
+}
+
+.white {
+    color: #ffffff;
+}
+
+.target-green {
+    border: 1px solid rgba(0,220,100,.35);
+}
+
+.target-blue {
+    border: 1px solid rgba(0,170,255,.35);
+}
+
+.target-red {
+    border: 1px solid rgba(255,48,79,.35);
+}
+
+.summary-card {
+    background: #101010;
+    border: 1px solid rgba(255,255,255,.10);
+    border-radius: 15px;
+    padding: 12px;
+    text-align: center;
+}
+
+.summary-number {
+    font-size: 1.35rem;
+    font-weight: 950;
+}
+
+.mobile-table {
+    font-size: 0.75rem;
+}
+
+@media (max-width: 640px) {
 
     .block-container {
-        max-width: 1250px;
-        padding:
-            0.35rem
-            0.30rem
-            1rem
-            0.30rem;
+        padding-left: 0.18rem;
+        padding-right: 0.18rem;
     }
-
-    header {
-        visibility: hidden;
-        height: 0;
-    }
-
-    footer {
-        visibility: hidden;
-    }
-
-
-    /* =========================
-       TITLE
-    ========================= */
 
     .main-title {
-        text-align: center;
-        font-size: 1.65rem;
-        font-weight: 950;
-        letter-spacing: 0.5px;
-        margin-top: 0;
-        margin-bottom: 0;
-        background:
-            linear-gradient(
-                90deg,
-                #00e676,
-                #00b0ff,
-                #ffea00,
-                #ff4081
-            );
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
+        font-size: 1.12rem;
     }
 
     .sub-title {
-        text-align: center;
-        font-size: 0.72rem;
-        color: #a8a8a8;
-        margin-bottom: 0.35rem;
+        font-size: 0.57rem;
     }
-
-
-    /* =========================
-       STOCK CARD
-    ========================= */
 
     .stock-card {
-        border-radius: 20px;
-        padding: 12px;
-        margin-top: 8px;
-        margin-bottom: 15px;
-
-        background:
-            linear-gradient(
-                145deg,
-                rgba(30,30,30,0.98),
-                rgba(8,8,8,0.98)
-            );
-
-        border:
-            1px solid
-            rgba(255,255,255,0.12);
-
-        box-shadow:
-            0 8px 30px
-            rgba(0,0,0,0.35);
-    }
-
-
-    /* =========================
-       SECTION
-    ========================= */
-
-    .section-title {
-        font-size: 0.96rem;
-        font-weight: 950;
-        margin-top: 12px;
-        margin-bottom: 6px;
-        padding-left: 3px;
-    }
-
-
-    /* =========================
-       SCORE CARD
-    ========================= */
-
-    .score-card {
-        border-radius: 18px;
-        padding: 12px;
-        text-align: center;
-
-        background:
-            linear-gradient(
-                135deg,
-                #151515,
-                #090909
-            );
-
-        border:
-            1px solid
-            rgba(255,255,255,0.13);
-    }
-
-    .score-title {
-        font-size: 0.68rem;
-        color: #9e9e9e;
-        font-weight: 900;
-        letter-spacing: 0.5px;
+        padding: 9px;
+        border-radius: 15px;
     }
 
     .score-number {
-        font-size: 2.0rem;
-        font-weight: 950;
-        line-height: 1.1;
+        font-size: 1.35rem;
     }
 
-
-    /* =========================
-       SIGNAL
-    ========================= */
-
-    .signal-box {
-        border-radius: 16px;
-        padding: 11px;
-        margin-top: 8px;
-        text-align: center;
-        font-size: 1.05rem;
-        font-weight: 950;
-        border: 1px solid rgba(255,255,255,0.13);
+    .section-title {
+        font-size: 0.84rem;
     }
 
-    .signal-buy {
-        background:
-            linear-gradient(
-                135deg,
-                rgba(0,230,118,0.30),
-                rgba(0,150,70,0.08)
-            );
-        border-color: rgba(0,230,118,0.55);
-        color: #00ff88;
-    }
-
-    .signal-hold {
-        background:
-            linear-gradient(
-                135deg,
-                rgba(0,176,255,0.30),
-                rgba(0,100,200,0.08)
-            );
-        border-color: rgba(0,176,255,0.55);
-        color: #40c4ff;
-    }
-
-    .signal-wait {
-        background:
-            linear-gradient(
-                135deg,
-                rgba(255,235,59,0.28),
-                rgba(200,150,0,0.08)
-            );
-        border-color: rgba(255,235,59,0.55);
-        color: #ffe600;
-    }
-
-    .signal-reduce {
-        background:
-            linear-gradient(
-                135deg,
-                rgba(255,152,0,0.30),
-                rgba(180,80,0,0.08)
-            );
-        border-color: rgba(255,152,0,0.55);
-        color: #ffab19;
-    }
-
-    .signal-exit {
-        background:
-            linear-gradient(
-                135deg,
-                rgba(255,48,79,0.32),
-                rgba(150,0,30,0.08)
-            );
-        border-color: rgba(255,48,79,0.60);
-        color: #ff405c;
-    }
-
-
-    /* =========================
-       DATA BOX
-    ========================= */
-
-    .data-box {
-        border-radius: 14px;
-        padding: 9px 8px;
-        margin: 4px 0;
-
-        background:
-            rgba(255,255,255,0.035);
-
-        border:
-            1px solid
-            rgba(255,255,255,0.08);
-
-        text-align: center;
-    }
-
-    .data-label {
-        font-size: 0.60rem;
-        color: #8e8e8e;
-        font-weight: 850;
-        text-transform: uppercase;
+    .signal-card {
+        font-size: 0.90rem;
+        padding: 10px;
     }
 
     .data-value {
-        font-size: 0.90rem;
-        font-weight: 900;
-        margin-top: 2px;
+        font-size: 0.82rem;
     }
 
+}
 
-    /* =========================
-       TARGET COLORS
-    ========================= */
-
-    .target-swing {
-        border-left: 4px solid #00e676;
-    }
-
-    .target-long {
-        border-left: 4px solid #00b0ff;
-    }
-
-    .target-sl {
-        border-left: 4px solid #ff304f;
-    }
-
-
-    /* =========================
-       MOBILE
-    ========================= */
-
-    @media (max-width: 640px) {
-
-        .block-container {
-            padding-left: 0.18rem;
-            padding-right: 0.18rem;
-        }
-
-        .main-title {
-            font-size: 1.25rem;
-        }
-
-        .sub-title {
-            font-size: 0.58rem;
-        }
-
-        .score-number {
-            font-size: 1.65rem;
-        }
-
-        .signal-box {
-            font-size: 0.92rem;
-            padding: 9px;
-        }
-
-        .section-title {
-            font-size: 0.86rem;
-        }
-
-        .data-value {
-            font-size: 0.78rem;
-        }
-
-        .data-label {
-            font-size: 0.54rem;
-        }
-    }
-
-    </style>
-    """,
-    unsafe_allow_html=True
-)
+</style>
+""", unsafe_allow_html=True)
 
 
 # =========================================================
@@ -365,26 +299,7 @@ def money(value):
         if value is None or pd.isna(value):
             return "—"
 
-        number = float(value)
-
-        if number == 0:
-            return "—"
-
-        return f"₹{number:,.2f}"
-
-    except Exception:
-
-        return "—"
-
-
-def num2(value):
-
-    try:
-
-        if value is None or pd.isna(value):
-            return "—"
-
-        return f"{float(value):.2f}"
+        return f"₹{float(value):,.2f}"
 
     except Exception:
 
@@ -405,7 +320,21 @@ def pct(value):
         return "—"
 
 
-def integer(value):
+def number(value, decimals=2):
+
+    try:
+
+        if value is None or pd.isna(value):
+            return "—"
+
+        return f"{float(value):,.{decimals}f}"
+
+    except Exception:
+
+        return "—"
+
+
+def integer_number(value):
 
     try:
 
@@ -434,83 +363,105 @@ def display_value(value):
 
 def clean_symbol(symbol):
 
-    symbol = str(
-        symbol
-    ).strip().upper()
+    symbol = str(symbol).strip().upper()
 
     if symbol.endswith(".NS"):
-        return symbol[:-3]
+        symbol = symbol[:-3]
 
     return symbol
 
 
 # =========================================================
-# SYMBOL
+# SIGNAL HELPERS
 # =========================================================
 
-def signal_symbol(decision):
+def decision_style(decision):
 
-    return {
-        "BUY": "🟢📈",
-        "HOLD": "🔵🛡️",
-        "WAIT": "🟡⏳",
-        "SELL": "🟠⚠️",
-        "EXIT": "🔴🚪"
-    }.get(
-        decision,
-        "⚪"
+    if decision == "BUY":
+        return (
+            "🟢🚀 BUY / વધારો",
+            "signal-buy",
+            "#00e676"
+        )
+
+    if decision == "HOLD":
+        return (
+            "🔵🛡️ HOLD / જાળવો",
+            "signal-hold",
+            "#00aaff"
+        )
+
+    if decision == "WAIT":
+        return (
+            "🟡⏳ WAIT / રાહ જુઓ",
+            "signal-wait",
+            "#ffd740"
+        )
+
+    if decision == "SELL":
+        return (
+            "🟠⚠️ REDUCE / ઘટાડો",
+            "signal-reduce",
+            "#ff9800"
+        )
+
+    return (
+        "🔴🚪 EXIT / બહાર નીકળો",
+        "signal-exit",
+        "#ff304f"
     )
 
 
-def decision_class(decision):
+def zone_style(score):
 
-    return {
-        "BUY": "signal-buy",
-        "HOLD": "signal-hold",
-        "WAIT": "signal-wait",
-        "SELL": "signal-reduce",
-        "EXIT": "signal-exit"
-    }.get(
-        decision,
-        "signal-wait"
-    )
+    if score >= 75:
+        return "🐂🟢 BULL", "bull"
+
+    if score >= 55:
+        return "🟡↔️ NEUTRAL", "neutral"
+
+    return "🐻🔴 BEAR", "bear"
 
 
-def zone_symbol(zone):
+def technical_zone_style(zone):
 
-    text = str(zone).upper()
+    z = str(zone).upper()
 
-    if "BULL" in text or "POSITIVE" in text or "STRONG" in text:
-        return "🟢📈"
+    if "STRONG" in z or "POSITIVE" in z or "BULL" in z:
+        return "🟢📈 " + z
 
-    if "BEAR" in text or "WEAK" in text or "POOR" in text:
-        return "🔴📉"
+    if "AVERAGE" in z or "MIXED" in z or "NEUTRAL" in z:
+        return "🟡↔️ " + z
 
-    if "AVERAGE" in text or "NEUTRAL" in text:
-        return "🟡↔️"
+    if (
+        "WEAK" in z
+        or "BEAR" in z
+        or "POOR" in z
+    ):
+        return "🔴📉 " + z
 
-    return "⚪"
+    return "⚪ " + z
 
 
-def alignment_symbol(alignment):
+def alignment_style(value):
 
-    text = str(alignment).upper()
+    text = str(value).upper()
 
-    if "BULL" in text:
+    if "BULLISH" in text:
         return "🟢📈 BULLISH"
 
-    if "BEAR" in text:
+    if "BEARISH" in text:
         return "🔴📉 BEARISH"
 
-    if "MIX" in text:
+    if "MIXED" in text:
         return "🟡↔️ MIXED"
 
-    return "⚪ NO DATA"
+    return "⚪ —"
 
 
-def trend_symbol(trend):
+def trend_style(value):
 
-    text = str(trend).upper()
+    text = str(value).upper()
 
     if "BULL" in text:
         return "🟢🐂 BULLISH"
@@ -518,20 +469,40 @@ def trend_symbol(trend):
     if "BEAR" in text:
         return "🔴🐻 BEARISH"
 
-    return "🟡↔️ NEUTRAL"
+    return "🟡↔️ MIXED"
 
 
-def breakout_symbol(value):
+def breakout_style(value):
 
     text = str(value).upper()
 
-    if text in ["YES", "TRUE", "1", "BREAKOUT"]:
+    if (
+        "YES" in text
+        or "BREAKOUT" in text
+        or text == "TRUE"
+    ):
         return "🟢🚀 YES"
 
-    if text in ["NO", "FALSE", "0"]:
-        return "🔴 NO"
+    return "🔴 NO"
 
-    return "⚪ —"
+
+def valuation_style(value):
+
+    text = str(value).upper()
+
+    if "CHEAP" in text or "UNDER" in text:
+        return "🟢💰 " + text
+
+    if "FAIR" in text:
+        return "🟡⚖️ " + text
+
+    if "EXPENSIVE" in text or "HIGH" in text:
+        return "🔴💸 " + text
+
+    if "LIMITED" in text:
+        return "⚪ DATA_LIMITED"
+
+    return "⚪ " + text
 
 
 # =========================================================
@@ -576,44 +547,7 @@ def calculate_atr(df, period=14):
         axis=1
     ).max(axis=1)
 
-    return (
-        true_range
-        .rolling(period)
-        .mean()
-    )
-
-
-# =========================================================
-# YFINANCE CHART CACHE
-# =========================================================
-
-@st.cache_data(
-    ttl=300,
-    show_spinner=False
-)
-def download_chart_data(symbol):
-
-    ticker_symbol = (
-        clean_symbol(symbol)
-        + ".NS"
-    )
-
-    try:
-
-        data = yf.download(
-            ticker_symbol,
-            period="2y",
-            interval="1d",
-            auto_adjust=False,
-            progress=False,
-            threads=False
-        )
-
-        return data
-
-    except Exception:
-
-        return pd.DataFrame()
+    return true_range.rolling(period).mean()
 
 
 # =========================================================
@@ -634,24 +568,25 @@ def build_price_chart(
         unsafe_allow_html=True
     )
 
-    data = download_chart_data(
-        symbol
-    )
-
-    if data.empty:
-
-        st.warning(
-            "⚠️ Yahoo Finance data હાલમાં unavailable / rate-limit છે. "
-            "Stock analysis ચાલુ રહેશે; chart પછી ફરી load થશે."
-        )
-
-        return
+    ticker_symbol = clean_symbol(symbol) + ".NS"
 
     try:
 
-        # -------------------------------------------------
-        # MULTIINDEX
-        # -------------------------------------------------
+        data = yf.download(
+            ticker_symbol,
+            period="2y",
+            interval="1d",
+            auto_adjust=False,
+            progress=False
+        )
+
+        if data.empty:
+
+            st.warning(
+                "📊 Historical chart data ઉપલબ્ધ નથી."
+            )
+
+            return
 
         if isinstance(
             data.columns,
@@ -671,20 +606,22 @@ def build_price_chart(
             "Volume"
         ]
 
-        if not all(
-            col in data.columns
-            for col in required
-        ):
+        missing = [
+            c
+            for c in required
+            if c not in data.columns
+        ]
+
+        if missing:
 
             st.warning(
-                "⚠️ Chart data incomplete."
+                "Chart data missing: "
+                + ", ".join(missing)
             )
 
             return
 
-        data = data[
-            required
-        ].copy()
+        data = data[required].copy()
 
         for col in required:
 
@@ -693,42 +630,36 @@ def build_price_chart(
                 errors="coerce"
             )
 
-        data.dropna(
-            inplace=True
-        )
+        data.dropna(inplace=True)
 
         if len(data) < 50:
 
             st.warning(
-                "⚠️ Historical chart data ઓછો છે."
+                "Chart માટે historical data ઓછો છે."
             )
 
             return
 
         close = data["Close"]
 
-        # -------------------------------------------------
+        # =================================================
         # EMA
-        # -------------------------------------------------
+        # =================================================
 
-        for period in [
-            10,
-            20,
-            50,
-            100,
-            200
-        ]:
+        for period in [10, 20, 50, 100, 200]:
 
-            data[
-                f"EMA{period}"
-            ] = close.ewm(
-                span=period,
-                adjust=False
-            ).mean()
+            data[f"EMA{period}"] = (
+                close
+                .ewm(
+                    span=period,
+                    adjust=False
+                )
+                .mean()
+            )
 
-        # -------------------------------------------------
+        # =================================================
         # RSI
-        # -------------------------------------------------
+        # =================================================
 
         delta = close.diff()
 
@@ -744,12 +675,9 @@ def build_price_chart(
             .mean()
         )
 
-        rs = (
-            gain /
-            loss.replace(
-                0,
-                np.nan
-            )
+        rs = gain / loss.replace(
+            0,
+            np.nan
         )
 
         data["RSI"] = (
@@ -760,23 +688,29 @@ def build_price_chart(
             )
         )
 
-        # -------------------------------------------------
+        # =================================================
         # MACD
-        # -------------------------------------------------
+        # =================================================
 
-        ema12 = close.ewm(
-            span=12,
-            adjust=False
-        ).mean()
-
-        ema26 = close.ewm(
-            span=26,
-            adjust=False
-        ).mean()
-
-        data["MACD"] = (
-            ema12 - ema26
+        ema12 = (
+            close
+            .ewm(
+                span=12,
+                adjust=False
+            )
+            .mean()
         )
+
+        ema26 = (
+            close
+            .ewm(
+                span=26,
+                adjust=False
+            )
+            .mean()
+        )
+
+        data["MACD"] = ema12 - ema26
 
         data["MACD_SIGNAL"] = (
             data["MACD"]
@@ -793,9 +727,9 @@ def build_price_chart(
             data["MACD_SIGNAL"]
         )
 
-        # -------------------------------------------------
+        # =================================================
         # VOLUME
-        # -------------------------------------------------
+        # =================================================
 
         data["VOL20"] = (
             data["Volume"]
@@ -809,9 +743,9 @@ def build_price_chart(
             data["VOL20"]
         )
 
-        # -------------------------------------------------
+        # =================================================
         # BREAKOUT
-        # -------------------------------------------------
+        # =================================================
 
         data["PREVIOUS_20_HIGH"] = (
             data["High"]
@@ -826,70 +760,11 @@ def build_price_chart(
             data["PREVIOUS_20_HIGH"]
         )
 
-        cmp = float(
-            close.iloc[-1]
-        )
+        # =================================================
+        # CURRENT VALUES
+        # =================================================
 
-        # -------------------------------------------------
-        # 52 WEEK
-        # -------------------------------------------------
-
-        one_year = data.tail(252)
-
-        high_52 = float(
-            one_year["High"].max()
-        )
-
-        low_52 = float(
-            one_year["Low"].min()
-        )
-
-        # -------------------------------------------------
-        # ATR
-        # -------------------------------------------------
-
-        atr_series = (
-            calculate_atr(
-                data
-            )
-            .dropna()
-        )
-
-        if atr_series.empty:
-
-            atr = max(
-                cmp * 0.02,
-                1
-            )
-
-        else:
-
-            atr = float(
-                atr_series.iloc[-1]
-            )
-
-        # -------------------------------------------------
-        # TARGET FALLBACK
-        # -------------------------------------------------
-
-        stop_loss = safe_float(
-            stop_loss,
-            cmp - 2 * atr
-        )
-
-        swing_target = safe_float(
-            swing_target,
-            cmp + 2 * atr
-        )
-
-        long_target = safe_float(
-            long_target,
-            cmp + 5 * atr
-        )
-
-        # -------------------------------------------------
-        # MOMENTUM
-        # -------------------------------------------------
+        cmp = float(close.iloc[-1])
 
         ema10 = safe_float(
             data["EMA10"].iloc[-1]
@@ -922,32 +797,76 @@ def build_price_chart(
 
         momentum_ready = (
             ema10 > ema20
-            and
-            rsi >= 55
-            and
-            macd > macd_signal
-            and
-            vol_ratio >= 1.2
+            and rsi >= 55
+            and macd > macd_signal
+            and vol_ratio >= 1.2
         )
 
-        # -------------------------------------------------
+        # =================================================
+        # 52 WEEK
+        # =================================================
+
+        one_year = data.tail(252)
+
+        high_52 = float(
+            one_year["High"].max()
+        )
+
+        low_52 = float(
+            one_year["Low"].min()
+        )
+
+        # =================================================
+        # ATR
+        # =================================================
+
+        atr_series = (
+            calculate_atr(data)
+            .dropna()
+        )
+
+        if atr_series.empty:
+            atr = max(cmp * 0.02, 1)
+        else:
+            atr = float(
+                atr_series.iloc[-1]
+            )
+
+        stop_loss = safe_float(
+            stop_loss,
+            cmp - 2 * atr
+        )
+
+        swing_target = safe_float(
+            swing_target,
+            cmp + 2 * atr
+        )
+
+        long_target = safe_float(
+            long_target,
+            cmp + 5 * atr
+        )
+
+        # =================================================
+        # SUBTITLE
+        # =================================================
+
+        st.caption(
+            "🤏 Pinch zoom • Drag • Double tap reset • "
+            "🔍 1M / 3M / 6M / 1Y / ALL"
+        )
+
+        # =================================================
         # FIGURE
-        # -------------------------------------------------
+        # =================================================
 
         fig = make_subplots(
             rows=2,
             cols=1,
             shared_xaxes=True,
             vertical_spacing=0.025,
-            row_heights=[
-                0.78,
-                0.22
-            ]
+            row_heights=[0.78, 0.22]
         )
-
-        # -------------------------------------------------
-        # CANDLE
-        # -------------------------------------------------
 
         fig.add_trace(
             go.Candlestick(
@@ -962,19 +881,17 @@ def build_price_chart(
             col=1
         )
 
-        # -------------------------------------------------
+        # =================================================
         # EMA
-        # -------------------------------------------------
+        # =================================================
 
-        ema_settings = [
+        for column, name, width in [
             ("EMA10", "EMA 10", 1.1),
             ("EMA20", "EMA 20", 1.1),
-            ("EMA50", "EMA 50", 1.3),
+            ("EMA50", "EMA 50", 1.4),
             ("EMA100", "EMA 100", 1.4),
-            ("EMA200", "EMA 200", 1.7)
-        ]
-
-        for column, name, width in ema_settings:
+            ("EMA200", "EMA 200", 1.8)
+        ]:
 
             fig.add_trace(
                 go.Scatter(
@@ -982,17 +899,15 @@ def build_price_chart(
                     y=data[column],
                     name=name,
                     mode="lines",
-                    line=dict(
-                        width=width
-                    )
+                    line=dict(width=width)
                 ),
                 row=1,
                 col=1
             )
 
-        # -------------------------------------------------
+        # =================================================
         # VOLUME
-        # -------------------------------------------------
+        # =================================================
 
         fig.add_trace(
             go.Bar(
@@ -1005,9 +920,9 @@ def build_price_chart(
             col=1
         )
 
-        # -------------------------------------------------
+        # =================================================
         # BREAKOUT
-        # -------------------------------------------------
+        # =================================================
 
         breakout_data = data[
             data["BREAKOUT"]
@@ -1030,34 +945,28 @@ def build_price_chart(
                 col=1
             )
 
-        # -------------------------------------------------
+        # =================================================
         # MOMENTUM
-        # -------------------------------------------------
+        # =================================================
 
         if momentum_ready:
 
             fig.add_trace(
                 go.Scatter(
-                    x=[
-                        data.index[-1]
-                    ],
-                    y=[
-                        cmp
-                    ],
+                    x=[data.index[-1]],
+                    y=[cmp],
                     mode="markers+text",
-                    text=[
-                        "⚡ MOMENTUM"
-                    ],
+                    text=["⚡ MOMENTUM"],
                     textposition="top center",
-                    name="⚡ Momentum"
+                    name="⚡ MOMENTUM"
                 ),
                 row=1,
                 col=1
             )
 
-        # -------------------------------------------------
-        # LEVELS
-        # -------------------------------------------------
+        # =================================================
+        # PRICE LEVELS
+        # =================================================
 
         levels = [
             (
@@ -1104,9 +1013,9 @@ def build_price_chart(
                 annotation_position="top right"
             )
 
-        # -------------------------------------------------
-        # RANGE
-        # -------------------------------------------------
+        # =================================================
+        # RANGE BUTTONS
+        # =================================================
 
         buttons = [
 
@@ -1144,33 +1053,24 @@ def build_price_chart(
             )
         ]
 
-        # -------------------------------------------------
+        # =================================================
         # LAYOUT
-        # -------------------------------------------------
+        # =================================================
 
         fig.update_layout(
-
             height=650,
-
             template="plotly_dark",
-
             paper_bgcolor="#050505",
-
             plot_bgcolor="#050505",
-
             hovermode="x unified",
-
             dragmode="pan",
-
             margin=dict(
                 l=5,
                 r=5,
-                t=45,
+                t=40,
                 b=5
             ),
-
             showlegend=True,
-
             legend=dict(
                 orientation="h",
                 yanchor="bottom",
@@ -1178,7 +1078,6 @@ def build_price_chart(
                 xanchor="center",
                 x=0.5
             ),
-
             xaxis=dict(
                 type="date",
                 fixedrange=False,
@@ -1190,17 +1089,14 @@ def build_price_chart(
                     buttons=buttons
                 )
             ),
-
             xaxis2=dict(
                 type="date",
                 fixedrange=False
             ),
-
             yaxis=dict(
                 fixedrange=False,
                 autorange=True
             ),
-
             yaxis2=dict(
                 fixedrange=False,
                 autorange=True
@@ -1208,27 +1104,16 @@ def build_price_chart(
         )
 
         config = {
-
             "displaylogo": False,
-
             "responsive": True,
-
             "scrollZoom": True,
-
             "doubleClick": "reset",
-
             "displayModeBar": True,
-
             "modeBarButtonsToRemove": [
                 "lasso2d",
                 "select2d"
             ]
         }
-
-        st.caption(
-            "🤏 Pinch zoom • Drag • Double tap reset • "
-            "🔍 1M / 3M / 6M / 1Y / ALL"
-        )
 
         st.plotly_chart(
             fig,
@@ -1236,6 +1121,10 @@ def build_price_chart(
             config=config,
             key=f"chart_{clean_symbol(symbol)}"
         )
+
+        # =================================================
+        # CHART SIGNAL
+        # =================================================
 
         if breakout:
 
@@ -1264,9 +1153,9 @@ def build_price_chart(
 
     except Exception as error:
 
-        st.warning(
-            f"📊 Chart unavailable: "
-            f"{type(error).__name__}"
+        st.error(
+            f"📊 Chart Error: "
+            f"{type(error).__name__}: {error}"
         )
 
 
@@ -1275,21 +1164,17 @@ def build_price_chart(
 # =========================================================
 
 st.markdown(
-    """
-    <div class="main-title">
-        📈 R.S MASTER STOCK GUIDE V2
-    </div>
-    """,
+    '<div class="main-title">'
+    '📈 R.S MASTER STOCK GUIDE V2'
+    '</div>',
     unsafe_allow_html=True
 )
 
 st.markdown(
-    """
-    <div class="sub-title">
-        NSE • Technical • Fundamental • Momentum •
-        Breakout • Exit Matra • Risk • Target
-    </div>
-    """,
+    '<div class="sub-title">'
+    'NSE • Technical • Fundamental • Momentum • '
+    'Breakout • Exit Matra • Risk • Target'
+    '</div>',
     unsafe_allow_html=True
 )
 
@@ -1300,7 +1185,10 @@ st.divider()
 # PORTFOLIO
 # =========================================================
 
-st.header("📁 પોર્ટફોલિયો")
+st.markdown(
+    '<div class="section-title">📁 પોર્ટફોલિયો</div>',
+    unsafe_allow_html=True
+)
 
 try:
 
@@ -1344,7 +1232,7 @@ portfolio["SYMBOL"] = (
 
 
 # =========================================================
-# PROCESS
+# PROCESSING
 # =========================================================
 
 all_scores = []
@@ -1352,19 +1240,15 @@ all_scores = []
 
 for raw_symbol in portfolio["SYMBOL"]:
 
-    symbol = clean_symbol(
-        raw_symbol
-    )
+    symbol = clean_symbol(raw_symbol)
 
     # =====================================================
-    # NSE
+    # NSE DATA
     # =====================================================
 
     try:
 
-        result = fetch_nse_data(
-            symbol
-        )
+        result = fetch_nse_data(symbol)
 
     except Exception as error:
 
@@ -1375,10 +1259,7 @@ for raw_symbol in portfolio["SYMBOL"]:
         continue
 
 
-    if not isinstance(
-        result,
-        dict
-    ):
+    if not isinstance(result, dict):
 
         st.error(
             f"{symbol}: NSE response invalid."
@@ -1393,10 +1274,8 @@ for raw_symbol in portfolio["SYMBOL"]:
 
     try:
 
-        fundamental = (
-            fetch_fundamental_data(
-                symbol
-            )
+        fundamental = fetch_fundamental_data(
+            symbol
         )
 
     except Exception as error:
@@ -1464,41 +1343,26 @@ for raw_symbol in portfolio["SYMBOL"]:
 
         decision = "BUY"
 
-        decision_text = (
-            "BUY / વધારો"
-        )
-
     elif master_score >= 60:
 
         decision = "HOLD"
-
-        decision_text = (
-            "HOLD / જાળવો"
-        )
 
     elif master_score >= 45:
 
         decision = "WAIT"
 
-        decision_text = (
-            "WAIT / રાહ જુઓ"
-        )
-
     elif master_score >= 30:
 
         decision = "SELL"
-
-        decision_text = (
-            "REDUCE / ઘટાડો"
-        )
 
     else:
 
         decision = "EXIT"
 
-        decision_text = (
-            "EXIT / બહાર નીકળો"
-        )
+
+    decision_text, decision_class, score_color = (
+        decision_style(decision)
+    )
 
 
     # =====================================================
@@ -1534,7 +1398,6 @@ for raw_symbol in portfolio["SYMBOL"]:
 
 
     exit_signal = "HOLD"
-
     exit_reason = "Setup active"
 
 
@@ -1543,18 +1406,12 @@ for raw_symbol in portfolio["SYMBOL"]:
         if cmp <= stop_loss:
 
             exit_signal = "EXIT"
-
-            exit_reason = (
-                "Stop-loss breached"
-            )
+            exit_reason = "Stop-loss breached"
 
         elif master_score < 30:
 
             exit_signal = "EXIT"
-
-            exit_reason = (
-                "Master score weak"
-            )
+            exit_reason = "Master score weak"
 
         elif (
             technical_score < 35
@@ -1563,7 +1420,6 @@ for raw_symbol in portfolio["SYMBOL"]:
         ):
 
             exit_signal = "REDUCE"
-
             exit_reason = (
                 "Technical + fundamental weakness"
             )
@@ -1571,7 +1427,6 @@ for raw_symbol in portfolio["SYMBOL"]:
         elif cmp >= long_target:
 
             exit_signal = "BOOK"
-
             exit_reason = (
                 "Long-term target reached"
             )
@@ -1581,17 +1436,9 @@ for raw_symbol in portfolio["SYMBOL"]:
     # MARKET ZONE
     # =====================================================
 
-    if master_score >= 75:
-
-        market_zone = "🐂 BULL"
-
-    elif master_score >= 55:
-
-        market_zone = "🟡 NEUTRAL"
-
-    else:
-
-        market_zone = "🐻 BEAR"
+    market_zone, market_class = zone_style(
+        master_score
+    )
 
 
     # =====================================================
@@ -1603,8 +1450,13 @@ for raw_symbol in portfolio["SYMBOL"]:
         unsafe_allow_html=True
     )
 
-    st.subheader(
-        f"📌 {symbol}"
+
+    st.markdown(
+        f'<div style="font-size:1.05rem;'
+        f'font-weight:950;margin-bottom:8px;">'
+        f'📌 {symbol}'
+        f'</div>',
+        unsafe_allow_html=True
     )
 
 
@@ -1648,21 +1500,6 @@ for raw_symbol in portfolio["SYMBOL"]:
     # MASTER SCORE
     # =====================================================
 
-    score_color = "#00e676"
-
-    if master_score < 30:
-        score_color = "#ff304f"
-
-    elif master_score < 45:
-        score_color = "#ff9800"
-
-    elif master_score < 60:
-        score_color = "#ffea00"
-
-    elif master_score < 75:
-        score_color = "#00b0ff"
-
-
     st.markdown(
         f"""
         <div class="score-card">
@@ -1675,10 +1512,10 @@ for raw_symbol in portfolio["SYMBOL"]:
                 class="score-number"
                 style="color:{score_color};"
             >
-                {master_score}
+                {master_score:.1f}
                 <span
                     style="
-                    font-size:0.8rem;
+                    font-size:0.78rem;
                     opacity:0.55;
                     "
                 >
@@ -1686,39 +1523,32 @@ for raw_symbol in portfolio["SYMBOL"]:
                 </span>
             </div>
 
+            <div class="score-bar">
+
+                <div
+                    class="score-fill"
+                    style="
+                    width:{max(0,min(master_score,100))}%;
+                    background:{score_color};
+                    "
+                >
+                </div>
+
+            </div>
+
         </div>
         """,
         unsafe_allow_html=True
     )
 
-    # REAL STREAMLIT PROGRESS BAR
-    st.progress(
-        min(
-            max(
-                int(master_score),
-                0
-            ),
-            100
-        )
-    )
-
 
     # =====================================================
-    # DECISION SIGNAL
+    # DECISION
     # =====================================================
-
-    dclass = decision_class(
-        decision
-    )
-
-    dsymbol = signal_symbol(
-        decision
-    )
 
     st.markdown(
         f"""
-        <div class="signal-box {dclass}">
-            {dsymbol}
+        <div class="signal-card {decision_class}">
             {decision_text}
         </div>
         """,
@@ -1732,7 +1562,7 @@ for raw_symbol in portfolio["SYMBOL"]:
 
     st.markdown(
         f"""
-        <div class="signal-box signal-reduce">
+        <div class="signal-card">
             {market_zone}
         </div>
         """,
@@ -1755,19 +1585,26 @@ for raw_symbol in portfolio["SYMBOL"]:
 
     with ex1:
 
-        exit_icon = {
-            "EXIT": "🔴",
-            "REDUCE": "🟠",
-            "HOLD": "🟢",
-            "BOOK": "💰"
-        }.get(
-            exit_signal,
-            "⚪"
-        )
+        if exit_signal == "EXIT":
+
+            exit_display = "🔴 EXIT"
+
+        elif exit_signal == "REDUCE":
+
+            exit_display = "🟠 REDUCE"
+
+        elif exit_signal == "BOOK":
+
+            exit_display = "🟢 BOOK"
+
+        else:
+
+            exit_display = "🟢 HOLD"
+
 
         st.metric(
             "EXIT SIGNAL",
-            f"{exit_icon} {exit_signal}"
+            exit_display
         )
 
     with ex2:
@@ -1794,7 +1631,7 @@ for raw_symbol in portfolio["SYMBOL"]:
     with t1:
 
         st.markdown(
-            '<div class="data-box target-swing">'
+            '<div class="data-card target-green">'
             '<div class="data-label">🎯 SWING</div>'
             f'<div class="data-value">{money(swing_target)}</div>'
             '</div>',
@@ -1804,7 +1641,7 @@ for raw_symbol in portfolio["SYMBOL"]:
     with t2:
 
         st.markdown(
-            '<div class="data-box target-long">'
+            '<div class="data-card target-blue">'
             '<div class="data-label">🚀 LONG</div>'
             f'<div class="data-value">{money(long_target)}</div>'
             '</div>',
@@ -1814,7 +1651,7 @@ for raw_symbol in portfolio["SYMBOL"]:
     with t3:
 
         st.markdown(
-            '<div class="data-box target-sl">'
+            '<div class="data-card target-red">'
             '<div class="data-label">🛑 STOP LOSS</div>'
             f'<div class="data-value">{money(stop_loss)}</div>'
             '</div>',
@@ -1856,25 +1693,24 @@ for raw_symbol in portfolio["SYMBOL"]:
 
     with tc2:
 
-        tech_zone = display_value(
-            result.get(
-                "TECHNICAL_ZONE"
-            )
-        )
-
         st.metric(
             "ZONE",
-            f"{zone_symbol(tech_zone)} {tech_zone}"
+            technical_zone_style(
+                result.get(
+                    "TECHNICAL_ZONE"
+                )
+            )
         )
 
     with tc3:
 
         st.metric(
             "RSI",
-            num2(
+            number(
                 result.get(
                     "RSI_14"
-                )
+                ),
+                2
             )
         )
 
@@ -1892,70 +1728,52 @@ for raw_symbol in portfolio["SYMBOL"]:
     with e1:
         st.metric(
             "10",
-            money(
-                result.get(
-                    "EMA_10"
-                )
-            )
+            money(result.get("EMA_10"))
         )
 
     with e2:
         st.metric(
             "20",
-            money(
-                result.get(
-                    "EMA_20"
-                )
-            )
+            money(result.get("EMA_20"))
         )
 
     with e3:
         st.metric(
             "50",
-            money(
-                result.get(
-                    "EMA_50"
-                )
-            )
+            money(result.get("EMA_50"))
         )
 
     with e4:
         st.metric(
             "100",
-            money(
-                result.get(
-                    "EMA_100"
-                )
-            )
+            money(result.get("EMA_100"))
         )
 
     with e5:
         st.metric(
             "200",
-            money(
-                result.get(
-                    "EMA_200"
-                )
-            )
+            money(result.get("EMA_200"))
         )
 
 
-    alignment = display_value(
-        result.get(
-            "EMA_ALIGNMENT"
-        )
-    )
+    # =====================================================
+    # ALIGNMENT
+    # =====================================================
 
     st.markdown(
         f"""
-        <div class="data-box">
+        <div class="data-card">
+
             <div class="data-label">
                 EMA ALIGNMENT
             </div>
 
             <div class="data-value">
-                {alignment_symbol(alignment)}
+                {alignment_style(
+                    result.get("EMA_ALIGNMENT")
+                )}
             </div>
+
         </div>
         """,
         unsafe_allow_html=True
@@ -1963,7 +1781,7 @@ for raw_symbol in portfolio["SYMBOL"]:
 
 
     # =====================================================
-    # RSI / MACD
+    # RSI MACD
     # =====================================================
 
     m1, m2, m3 = st.columns(3)
@@ -1972,10 +1790,11 @@ for raw_symbol in portfolio["SYMBOL"]:
 
         st.metric(
             "RSI 14",
-            num2(
+            number(
                 result.get(
                     "RSI_14"
-                )
+                ),
+                2
             )
         )
 
@@ -1983,10 +1802,11 @@ for raw_symbol in portfolio["SYMBOL"]:
 
         st.metric(
             "MACD",
-            num2(
+            number(
                 result.get(
                     "MACD"
-                )
+                ),
+                2
             )
         )
 
@@ -1994,23 +1814,21 @@ for raw_symbol in portfolio["SYMBOL"]:
 
         st.metric(
             "HISTOGRAM",
-            num2(
+            number(
                 result.get(
                     "MACD_HIST"
-                )
+                ),
+                2
             )
         )
 
 
     # =====================================================
-    # TREND
+    # TREND / CPR / PIVOT
     # =====================================================
 
-    st.markdown(
-        '<div class="section-title">'
-        '🧭 TREND / CPR / PIVOT'
-        '</div>',
-        unsafe_allow_html=True
+    st.caption(
+        "🧭 TREND / CPR / PIVOT"
     )
 
     s1, s2, s3 = st.columns(3)
@@ -2028,16 +1846,12 @@ for raw_symbol in portfolio["SYMBOL"]:
 
     with s2:
 
-        trend = display_value(
-            result.get(
-                "SUPERTREND_STATUS"
-            )
-        )
-
         st.metric(
             "TREND",
-            trend_symbol(
-                trend
+            trend_style(
+                result.get(
+                    "SUPERTREND_STATUS"
+                )
             )
         )
 
@@ -2063,7 +1877,7 @@ for raw_symbol in portfolio["SYMBOL"]:
 
         st.metric(
             "VOLUME",
-            integer(
+            integer_number(
                 result.get(
                     "VOLUME"
                 )
@@ -2072,22 +1886,21 @@ for raw_symbol in portfolio["SYMBOL"]:
 
     with v2:
 
-        ratio = safe_float(
-            result.get(
-                "VOLUME_RATIO"
-            )
-        )
-
         st.metric(
             "VOLUME RATIO",
-            f"{ratio:.2f}x"
+            number(
+                result.get(
+                    "VOLUME_RATIO"
+                ),
+                2
+            ) + "x"
         )
 
     with v3:
 
         st.metric(
             "BREAKOUT",
-            breakout_symbol(
+            breakout_style(
                 result.get(
                     "VOLUME_BREAKOUT"
                 )
@@ -2117,15 +1930,13 @@ for raw_symbol in portfolio["SYMBOL"]:
 
     with f2:
 
-        fzone = display_value(
-            fundamental.get(
-                "FUNDAMENTAL_ZONE"
-            )
-        )
-
         st.metric(
             "ZONE",
-            f"{zone_symbol(fzone)} {fzone}"
+            technical_zone_style(
+                fundamental.get(
+                    "FUNDAMENTAL_ZONE"
+                )
+            )
         )
 
     with f3:
@@ -2204,10 +2015,11 @@ for raw_symbol in portfolio["SYMBOL"]:
 
         st.metric(
             "DEBT / EQUITY",
-            num2(
+            number(
                 fundamental.get(
                     "DEBT_TO_EQUITY"
-                )
+                ),
+                2
             )
         )
 
@@ -2216,11 +2028,8 @@ for raw_symbol in portfolio["SYMBOL"]:
     # VALUATION
     # =====================================================
 
-    st.markdown(
-        '<div class="section-title">'
-        '💰 VALUATION'
-        '</div>',
-        unsafe_allow_html=True
+    st.caption(
+        "💰 VALUATION"
     )
 
     q1, q2, q3, q4 = st.columns(4)
@@ -2229,10 +2038,11 @@ for raw_symbol in portfolio["SYMBOL"]:
 
         st.metric(
             "PE",
-            num2(
+            number(
                 fundamental.get(
                     "PE"
-                )
+                ),
+                2
             )
         )
 
@@ -2240,10 +2050,11 @@ for raw_symbol in portfolio["SYMBOL"]:
 
         st.metric(
             "FORWARD PE",
-            num2(
+            number(
                 fundamental.get(
                     "FORWARD_PE"
-                )
+                ),
+                2
             )
         )
 
@@ -2251,24 +2062,23 @@ for raw_symbol in portfolio["SYMBOL"]:
 
         st.metric(
             "PB",
-            num2(
+            number(
                 fundamental.get(
                     "PB"
-                )
+                ),
+                2
             )
         )
 
     with q4:
 
-        valuation = display_value(
-            fundamental.get(
-                "VALUATION_ZONE"
-            )
-        )
-
         st.metric(
             "VALUATION",
-            f"{zone_symbol(valuation)} {valuation}"
+            valuation_style(
+                fundamental.get(
+                    "VALUATION_ZONE"
+                )
+            )
         )
 
 
@@ -2294,15 +2104,13 @@ for raw_symbol in portfolio["SYMBOL"]:
 
     with r2:
 
-        risk_level = display_value(
-            result.get(
-                "RISK_LEVEL"
-            )
-        )
-
         st.metric(
             "RISK LEVEL",
-            risk_level
+            display_value(
+                result.get(
+                    "RISK_LEVEL"
+                )
+            )
         )
 
     with r3:
@@ -2318,7 +2126,7 @@ for raw_symbol in portfolio["SYMBOL"]:
 
 
     # =====================================================
-    # STATUS
+    # DATA STATUS
     # =====================================================
 
     st.caption(
@@ -2356,93 +2164,48 @@ for raw_symbol in portfolio["SYMBOL"]:
 📈 R.S MASTER STOCK GUIDE V2
 
 📌 STOCK: {symbol}
-CMP: ₹{cmp:.2f}
+CMP: {money(cmp)}
+CHANGE: {pct(result.get("CHANGE_%"))}
 
-🏦 MASTER SCORE: {master_score}/100
-
-🎯 DECISION:
-{signal_symbol(decision)} {decision_text}
-
-MARKET ZONE:
+🏦 MASTER SCORE: {master_score:.1f}/100
+🎯 DECISION: {decision_text}
 {market_zone}
 
-📈 TECHNICAL:
-{technical_score:.0f}/100
+📈 TECHNICAL: {technical_score:.0f}/100
+🏢 FUNDAMENTAL: {fundamental_score:.0f}/100
+🛡️ RISK: {risk_score:.0f}/100
 
-🏢 FUNDAMENTAL:
-{fundamental_score:.0f}/100
+🎯 SWING: {money(swing_target)}
+🚀 LONG: {money(long_target)}
+🛑 STOP LOSS: {money(stop_loss)}
 
-🛡️ RISK:
-{risk_score:.0f}/100
+🚪 EXIT MATRA: {exit_signal}
+REASON: {exit_reason}
 
-🎯 SWING TARGET:
-₹{swing_target:.2f}
-
-🚀 LONG TARGET:
-₹{long_target:.2f}
-
-🛑 STOP LOSS:
-₹{stop_loss:.2f}
-
-🚪 EXIT MATRA:
-{exit_signal}
-
-Reason:
-{exit_reason}
-
-📊 RSI:
-{num2(result.get("RSI_14"))}
-
-📊 MACD:
-{num2(result.get("MACD"))}
-
-📊 MACD HISTOGRAM:
-{num2(result.get("MACD_HIST"))}
-
-📈 EMA ALIGNMENT:
-{alignment_symbol(
-    result.get("EMA_ALIGNMENT")
-)}
-
-🧭 TREND:
-{trend_symbol(
-    result.get("SUPERTREND_STATUS")
-)}
+📊 RSI 14: {number(result.get("RSI_14"), 2)}
+📊 MACD: {number(result.get("MACD"), 2)}
+📊 HISTOGRAM: {number(result.get("MACD_HIST"), 2)}
 
 🚀 BREAKOUT:
-{breakout_symbol(
-    result.get("VOLUME_BREAKOUT")
-)}
+{breakout_style(result.get("VOLUME_BREAKOUT"))}
 
 🏢 REVENUE GROWTH:
-{pct(
-    fundamental.get("REVENUE_GROWTH_%")
-)}
+{pct(fundamental.get("REVENUE_GROWTH_%"))}
 
 💰 PROFIT GROWTH:
-{pct(
-    fundamental.get("PROFIT_GROWTH_%")
-)}
+{pct(fundamental.get("PROFIT_GROWTH_%"))}
 
-📈 EPS GROWTH:
-{pct(
-    fundamental.get("EPS_GROWTH_%")
-)}
+EPS GROWTH:
+{pct(fundamental.get("EPS_GROWTH_%"))}
 
 ROE:
-{pct(
-    fundamental.get("ROE_%")
-)}
+{pct(fundamental.get("ROE_%"))}
 
 ROCE:
-{pct(
-    fundamental.get("ROCE_%")
-)}
+{pct(fundamental.get("ROCE_%"))}
 
-📅 DATA DATE:
-{display_value(
-    result.get("DATA_DATE")
-)}
+DATA DATE:
+{display_value(result.get("DATA_DATE"))}
 """
 
     with st.expander(
@@ -2482,8 +2245,11 @@ ROCE:
 # PORTFOLIO SUMMARY
 # =========================================================
 
-st.header(
-    "📊 PORTFOLIO SUMMARY"
+st.markdown(
+    '<div class="section-title">'
+    '📊 PORTFOLIO SUMMARY'
+    '</div>',
+    unsafe_allow_html=True
 )
 
 
@@ -2536,81 +2302,111 @@ if all_scores:
     )
 
 
-    # =====================================================
-    # SUMMARY CARDS
-    # =====================================================
-
     b1, b2, b3 = st.columns(3)
 
     with b1:
 
-        st.metric(
-            "📊 STOCKS",
-            len(scores_df)
+        st.markdown(
+            f"""
+            <div class="summary-card">
+
+                <div class="data-label">
+                    📊 STOCKS
+                </div>
+
+                <div class="summary-number">
+                    {len(scores_df)}
+                </div>
+
+            </div>
+            """,
+            unsafe_allow_html=True
         )
 
     with b2:
 
-        st.metric(
-            "❤️ PORTFOLIO HEALTH",
-            f"{health}/100"
+        health_color = (
+            "#00e676"
+            if health >= 60
+            else "#ffd740"
+            if health >= 40
+            else "#ff304f"
+        )
+
+        st.markdown(
+            f"""
+            <div class="summary-card">
+
+                <div class="data-label">
+                    ❤️ PORTFOLIO HEALTH
+                </div>
+
+                <div
+                    class="summary-number"
+                    style="color:{health_color};"
+                >
+                    {health}/100
+                </div>
+
+            </div>
+            """,
+            unsafe_allow_html=True
         )
 
     with b3:
 
-        st.metric(
-            "🟢 BUY",
-            buy
+        st.markdown(
+            f"""
+            <div class="summary-card">
+
+                <div class="data-label">
+                    🟢 BUY
+                </div>
+
+                <div
+                    class="summary-number"
+                    style="color:#00e676;"
+                >
+                    {buy}
+                </div>
+
+            </div>
+            """,
+            unsafe_allow_html=True
         )
 
 
     st.markdown(
         f"""
-        <div class="signal-box signal-reduce">
-
-        🟢 BUY: {buy}
-        &nbsp;&nbsp;|&nbsp;&nbsp;
-        🔵 HOLD: {hold}
-        &nbsp;&nbsp;|&nbsp;&nbsp;
-        🟡 WAIT: {wait}
-        &nbsp;&nbsp;|&nbsp;&nbsp;
-        🟠 REDUCE: {sell}
-        &nbsp;&nbsp;|&nbsp;&nbsp;
-        🔴 EXIT: {exit_count}
-
+        <div
+            style="
+            text-align:center;
+            margin:10px 0;
+            font-size:0.78rem;
+            font-weight:800;
+            "
+        >
+            🟢 BUY: {buy}
+            &nbsp; | &nbsp;
+            🔵 HOLD: {hold}
+            &nbsp; | &nbsp;
+            🟡 WAIT: {wait}
+            &nbsp; | &nbsp;
+            🟠 REDUCE: {sell}
+            &nbsp; | &nbsp;
+            🔴 EXIT: {exit_count}
         </div>
         """,
         unsafe_allow_html=True
     )
 
 
-    # =====================================================
-    # SUMMARY TABLE
-    # =====================================================
-
-    summary_display = scores_df.copy()
-
-    summary_display["SIGNAL"] = (
-        summary_display["DECISION"]
-        .map(signal_symbol)
-    )
-
-    summary_display = summary_display[
-        [
-            "SYMBOL",
-            "MASTER_SCORE",
-            "SIGNAL",
-            "DECISION",
-            "EXIT_MATRA",
-            "ZONE"
-        ]
-    ]
-
     st.dataframe(
-        summary_display,
+        scores_df,
         width="stretch",
         hide_index=True
     )
+
 
 else:
 
