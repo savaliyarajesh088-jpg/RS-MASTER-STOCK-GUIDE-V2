@@ -1483,7 +1483,18 @@ ems_input = {
     "support_breakdown": None,
 
     # Not available yet from this section
-    "volume_confirmation": None,
+    "volume_confirmation": (
+    str(
+        result.get(
+            "VOLUME_BREAKOUT"
+        )
+    ).upper()
+    in {
+        "YES",
+        "TRUE",
+        "BREAKOUT"
+    }
+),
 
     # Not available yet
     "relative_strength_breakdown": None,
