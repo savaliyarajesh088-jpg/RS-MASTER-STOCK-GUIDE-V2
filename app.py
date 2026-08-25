@@ -8,6 +8,12 @@ from plotly.subplots import make_subplots
 
 from src.nse_data import fetch_nse_data
 from src.fundamental_engine import fetch_fundamental_data
+from src.ems_engine import (
+    evaluate_ems,
+    ems_display,
+    is_exit_confirmed,
+    is_data_limited,
+)
 
 
 # =========================================================
