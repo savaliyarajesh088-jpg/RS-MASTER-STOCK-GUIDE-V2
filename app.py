@@ -3,6 +3,7 @@ import pandas as pd
 import numpy as np
 import yfinance as yf
 import plotly.graph_objects as go
+
 from plotly.subplots import make_subplots
 
 from src.nse_data import fetch_nse_data
@@ -22,436 +23,515 @@ st.set_page_config(
 
 
 # =========================================================
-# MOBILE FULL COLOR UI
+# MOBILE + FULL COLOR UI
 # =========================================================
 
-st.markdown("""
-<style>
+st.markdown(
+    """
+    <style>
 
-.stApp {
-    background:
-        radial-gradient(circle at top left, #172554 0%, #050505 32%),
-        #050505;
-    color: #ffffff;
-}
+    /* =========================
+       GLOBAL
+    ========================= */
 
-.block-container {
-    max-width: 1250px;
-    padding: 0.45rem 0.35rem 1.5rem 0.35rem;
-}
-
-/* ---------- HEADER ---------- */
-
-.rs-header {
-    text-align:center;
-    padding:12px 8px 8px 8px;
-}
-
-.rs-title {
-    font-size:1.65rem;
-    font-weight:950;
-    letter-spacing:0.4px;
-}
-
-.rs-subtitle {
-    font-size:0.72rem;
-    opacity:0.70;
-}
-
-/* ---------- STOCK CARD ---------- */
-
-.stock-card {
-    background:
-        linear-gradient(145deg,
-        rgba(20,20,30,0.98),
-        rgba(7,7,12,0.98));
-    border:1px solid rgba(255,255,255,0.14);
-    border-radius:20px;
-    padding:12px;
-    margin:10px 0 18px 0;
-    box-shadow:
-        0 8px 30px rgba(0,0,0,0.35);
-}
-
-/* ---------- STOCK NAME ---------- */
-
-.stock-name {
-    font-size:1.25rem;
-    font-weight:950;
-    margin-bottom:8px;
-}
-
-/* ---------- COLOR CARDS ---------- */
-
-.color-card {
-    border-radius:15px;
-    padding:10px;
-    text-align:center;
-    margin:4px 0;
-    border:1px solid rgba(255,255,255,0.15);
-}
-
-.card-label {
-    font-size:0.64rem;
-    opacity:0.72;
-    font-weight:800;
-}
-
-.card-value {
-    font-size:1.05rem;
-    font-weight:950;
-    margin-top:2px;
-}
-
-.blue-card {
-    background:linear-gradient(145deg,
-        rgba(0,120,255,0.22),
-        rgba(0,60,180,0.08));
-}
-
-.green-card {
-    background:linear-gradient(145deg,
-        rgba(0,220,110,0.22),
-        rgba(0,100,50,0.08));
-}
-
-.red-card {
-    background:linear-gradient(145deg,
-        rgba(255,40,60,0.22),
-        rgba(120,0,20,0.08));
-}
-
-.orange-card {
-    background:linear-gradient(145deg,
-        rgba(255,150,0,0.23),
-        rgba(120,60,0,0.08));
-}
-
-.yellow-card {
-    background:linear-gradient(145deg,
-        rgba(255,210,0,0.20),
-        rgba(120,90,0,0.08));
-}
-
-.purple-card {
-    background:linear-gradient(145deg,
-        rgba(160,80,255,0.22),
-        rgba(80,20,150,0.08));
-}
-
-/* ---------- SIGNAL ---------- */
-
-.signal-box {
-    border-radius:18px;
-    padding:13px 8px;
-    text-align:center;
-    margin:9px 0;
-    border:1px solid rgba(255,255,255,0.20);
-    font-size:1.18rem;
-    font-weight:950;
-}
-
-.signal-small {
-    font-size:0.68rem;
-    opacity:0.75;
-    font-weight:800;
-}
-
-/* ---------- SCORE ---------- */
-
-.score-wrap {
-    background:#111318;
-    border:1px solid rgba(255,255,255,0.12);
-    border-radius:17px;
-    padding:12px;
-    margin:8px 0;
-}
-
-.score-heading {
-    font-size:0.68rem;
-    font-weight:900;
-    opacity:0.7;
-}
-
-.score-number {
-    font-size:1.7rem;
-    font-weight:950;
-}
-
-.score-bar {
-    width:100%;
-    height:9px;
-    border-radius:20px;
-    background:#252525;
-    overflow:hidden;
-    margin-top:6px;
-}
-
-.score-fill {
-    height:100%;
-    border-radius:20px;
-}
-
-/* ---------- SECTION ---------- */
-
-.section-title {
-    font-size:0.96rem;
-    font-weight:950;
-    margin-top:12px;
-    margin-bottom:6px;
-    padding-left:3px;
-}
-
-/* ---------- MINI SIGNAL ---------- */
-
-.mini-signal {
-    display:inline-block;
-    padding:4px 8px;
-    border-radius:10px;
-    font-size:0.70rem;
-    font-weight:900;
-    border:1px solid rgba(255,255,255,0.15);
-}
-
-/* ---------- MOBILE ---------- */
-
-@media(max-width:640px){
+    .stApp {
+        background:
+            radial-gradient(
+                circle at top,
+                #171717 0%,
+                #080808 42%,
+                #030303 100%
+            );
+        color: #ffffff;
+    }
 
     .block-container {
-        padding-left:0.18rem;
-        padding-right:0.18rem;
+        max-width: 1250px;
+        padding:
+            0.35rem
+            0.30rem
+            1rem
+            0.30rem;
     }
 
-    .rs-title {
-        font-size:1.20rem;
+    header {
+        visibility: hidden;
+        height: 0;
     }
 
-    .rs-subtitle {
-        font-size:0.59rem;
+    footer {
+        visibility: hidden;
     }
+
+
+    /* =========================
+       TITLE
+    ========================= */
+
+    .main-title {
+        text-align: center;
+        font-size: 1.65rem;
+        font-weight: 950;
+        letter-spacing: 0.5px;
+        margin-top: 0;
+        margin-bottom: 0;
+        background:
+            linear-gradient(
+                90deg,
+                #00e676,
+                #00b0ff,
+                #ffea00,
+                #ff4081
+            );
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+
+    .sub-title {
+        text-align: center;
+        font-size: 0.72rem;
+        color: #a8a8a8;
+        margin-bottom: 0.35rem;
+    }
+
+
+    /* =========================
+       STOCK CARD
+    ========================= */
 
     .stock-card {
-        border-radius:16px;
-        padding:9px;
+        border-radius: 20px;
+        padding: 12px;
+        margin-top: 8px;
+        margin-bottom: 15px;
+
+        background:
+            linear-gradient(
+                145deg,
+                rgba(30,30,30,0.98),
+                rgba(8,8,8,0.98)
+            );
+
+        border:
+            1px solid
+            rgba(255,255,255,0.12);
+
+        box-shadow:
+            0 8px 30px
+            rgba(0,0,0,0.35);
     }
 
-    .stock-name {
-        font-size:1.10rem;
+
+    /* =========================
+       SECTION
+    ========================= */
+
+    .section-title {
+        font-size: 0.96rem;
+        font-weight: 950;
+        margin-top: 12px;
+        margin-bottom: 6px;
+        padding-left: 3px;
     }
 
-    .card-value {
-        font-size:0.92rem;
+
+    /* =========================
+       SCORE CARD
+    ========================= */
+
+    .score-card {
+        border-radius: 18px;
+        padding: 12px;
+        text-align: center;
+
+        background:
+            linear-gradient(
+                135deg,
+                #151515,
+                #090909
+            );
+
+        border:
+            1px solid
+            rgba(255,255,255,0.13);
+    }
+
+    .score-title {
+        font-size: 0.68rem;
+        color: #9e9e9e;
+        font-weight: 900;
+        letter-spacing: 0.5px;
     }
 
     .score-number {
-        font-size:1.42rem;
+        font-size: 2.0rem;
+        font-weight: 950;
+        line-height: 1.1;
     }
+
+
+    /* =========================
+       SIGNAL
+    ========================= */
 
     .signal-box {
-        font-size:1.02rem;
-        padding:11px 6px;
+        border-radius: 16px;
+        padding: 11px;
+        margin-top: 8px;
+        text-align: center;
+        font-size: 1.05rem;
+        font-weight: 950;
+        border: 1px solid rgba(255,255,255,0.13);
     }
 
-    .section-title {
-        font-size:0.86rem;
+    .signal-buy {
+        background:
+            linear-gradient(
+                135deg,
+                rgba(0,230,118,0.30),
+                rgba(0,150,70,0.08)
+            );
+        border-color: rgba(0,230,118,0.55);
+        color: #00ff88;
     }
 
-}
+    .signal-hold {
+        background:
+            linear-gradient(
+                135deg,
+                rgba(0,176,255,0.30),
+                rgba(0,100,200,0.08)
+            );
+        border-color: rgba(0,176,255,0.55);
+        color: #40c4ff;
+    }
 
-/* Remove dataframe excess width */
-div[data-testid="stDataFrame"] {
-    border-radius:14px;
-    overflow:hidden;
-}
+    .signal-wait {
+        background:
+            linear-gradient(
+                135deg,
+                rgba(255,235,59,0.28),
+                rgba(200,150,0,0.08)
+            );
+        border-color: rgba(255,235,59,0.55);
+        color: #ffe600;
+    }
 
-</style>
-""", unsafe_allow_html=True)
+    .signal-reduce {
+        background:
+            linear-gradient(
+                135deg,
+                rgba(255,152,0,0.30),
+                rgba(180,80,0,0.08)
+            );
+        border-color: rgba(255,152,0,0.55);
+        color: #ffab19;
+    }
+
+    .signal-exit {
+        background:
+            linear-gradient(
+                135deg,
+                rgba(255,48,79,0.32),
+                rgba(150,0,30,0.08)
+            );
+        border-color: rgba(255,48,79,0.60);
+        color: #ff405c;
+    }
+
+
+    /* =========================
+       DATA BOX
+    ========================= */
+
+    .data-box {
+        border-radius: 14px;
+        padding: 9px 8px;
+        margin: 4px 0;
+
+        background:
+            rgba(255,255,255,0.035);
+
+        border:
+            1px solid
+            rgba(255,255,255,0.08);
+
+        text-align: center;
+    }
+
+    .data-label {
+        font-size: 0.60rem;
+        color: #8e8e8e;
+        font-weight: 850;
+        text-transform: uppercase;
+    }
+
+    .data-value {
+        font-size: 0.90rem;
+        font-weight: 900;
+        margin-top: 2px;
+    }
+
+
+    /* =========================
+       TARGET COLORS
+    ========================= */
+
+    .target-swing {
+        border-left: 4px solid #00e676;
+    }
+
+    .target-long {
+        border-left: 4px solid #00b0ff;
+    }
+
+    .target-sl {
+        border-left: 4px solid #ff304f;
+    }
+
+
+    /* =========================
+       MOBILE
+    ========================= */
+
+    @media (max-width: 640px) {
+
+        .block-container {
+            padding-left: 0.18rem;
+            padding-right: 0.18rem;
+        }
+
+        .main-title {
+            font-size: 1.25rem;
+        }
+
+        .sub-title {
+            font-size: 0.58rem;
+        }
+
+        .score-number {
+            font-size: 1.65rem;
+        }
+
+        .signal-box {
+            font-size: 0.92rem;
+            padding: 9px;
+        }
+
+        .section-title {
+            font-size: 0.86rem;
+        }
+
+        .data-value {
+            font-size: 0.78rem;
+        }
+
+        .data-label {
+            font-size: 0.54rem;
+        }
+    }
+
+    </style>
+    """,
+    unsafe_allow_html=True
+)
 
 
 # =========================================================
 # HELPERS
 # =========================================================
 
-def safe_float(v, default=0.0):
+def safe_float(value, default=0.0):
+
     try:
-        if v is None or pd.isna(v):
+
+        if value is None:
             return default
-        return float(v)
+
+        if pd.isna(value):
+            return default
+
+        return float(value)
+
     except Exception:
+
         return default
 
 
-def money(v):
+def money(value):
+
     try:
-        if v is None or pd.isna(v):
+
+        if value is None or pd.isna(value):
             return "—"
-        return f"₹{float(v):,.2f}"
+
+        number = float(value)
+
+        if number == 0:
+            return "—"
+
+        return f"₹{number:,.2f}"
+
     except Exception:
+
         return "—"
 
 
-def pct(v):
+def num2(value):
+
     try:
-        if v is None or pd.isna(v):
+
+        if value is None or pd.isna(value):
             return "—"
-        return f"{float(v):.2f}%"
+
+        return f"{float(value):.2f}"
+
     except Exception:
+
         return "—"
 
 
-def number2(v):
+def pct(value):
+
     try:
-        if v is None or pd.isna(v):
+
+        if value is None or pd.isna(value):
             return "—"
-        return f"{float(v):.2f}"
+
+        return f"{float(value):.2f}%"
+
     except Exception:
+
         return "—"
+
+
+def integer(value):
+
+    try:
+
+        if value is None or pd.isna(value):
+            return "—"
+
+        return f"{float(value):,.0f}"
+
+    except Exception:
+
+        return "—"
+
+
+def display_value(value):
+
+    try:
+
+        if value is None or pd.isna(value):
+            return "—"
+
+    except Exception:
+        pass
+
+    return str(value)
 
 
 def clean_symbol(symbol):
-    symbol = str(symbol).strip().upper()
+
+    symbol = str(
+        symbol
+    ).strip().upper()
 
     if symbol.endswith(".NS"):
-        symbol = symbol[:-3]
+        return symbol[:-3]
 
     return symbol
 
 
-def display_value(v):
-    try:
-        if v is None or pd.isna(v):
-            return "—"
-    except Exception:
-        pass
-
-    return v
-
-
 # =========================================================
-# COLOR LOGIC
+# SYMBOL
 # =========================================================
 
-def score_color(score):
+def signal_symbol(decision):
 
-    if score >= 75:
-        return "#00e676"
-
-    if score >= 60:
-        return "#2196f3"
-
-    if score >= 45:
-        return "#ffd000"
-
-    if score >= 30:
-        return "#ff9800"
-
-    return "#ff304f"
-
-
-def decision_info(score):
-
-    if score >= 75:
-        return (
-            "🟢🔥 BUY",
-            "buy",
-            "Strong setup"
-        )
-
-    if score >= 60:
-        return (
-            "🔵🛡️ HOLD",
-            "hold",
-            "Good setup"
-        )
-
-    if score >= 45:
-        return (
-            "🟡⏳ WAIT",
-            "wait",
-            "Confirmation required"
-        )
-
-    if score >= 30:
-        return (
-            "🟠⚠️ REDUCE",
-            "reduce",
-            "Weak setup"
-        )
-
-    return (
-        "🔴🚪 EXIT",
-        "exit",
-        "Master score weak"
+    return {
+        "BUY": "🟢📈",
+        "HOLD": "🔵🛡️",
+        "WAIT": "🟡⏳",
+        "SELL": "🟠⚠️",
+        "EXIT": "🔴🚪"
+    }.get(
+        decision,
+        "⚪"
     )
 
 
-def market_info(score):
+def decision_class(decision):
 
-    if score >= 75:
-        return "🐂🟢 BULL", "green-card"
-
-    if score >= 55:
-        return "🟡 NEUTRAL", "yellow-card"
-
-    return "🐻🔴 BEAR", "red-card"
-
-
-def signal_class(kind):
-
-    mapping = {
-        "buy": "green-card",
-        "hold": "blue-card",
-        "wait": "yellow-card",
-        "reduce": "orange-card",
-        "exit": "red-card"
-    }
-
-    return mapping.get(kind, "blue-card")
-
-
-# =========================================================
-# COLOR SCORE
-# =========================================================
-
-def score_html(score):
-
-    color = score_color(score)
-
-    return f"""
-    <div class="score-wrap">
-        <div class="score-heading">
-            🏦 MASTER SCORE
-        </div>
-
-        <div class="score-number">
-            {score:.1f}<span style="font-size:0.8rem;opacity:0.6">/100</span>
-        </div>
-
-        <div class="score-bar">
-            <div class="score-fill"
-                 style="width:{max(0,min(score,100))}%;
-                        background:{color};">
-            </div>
-        </div>
-    </div>
-    """
-
-
-# =========================================================
-# CARD
-# =========================================================
-
-def color_card(label, val, cls="blue-card"):
-
-    st.markdown(
-        f"""
-        <div class="color-card {cls}">
-            <div class="card-label">{label}</div>
-            <div class="card-value">{val}</div>
-        </div>
-        """,
-        unsafe_allow_html=True
+    return {
+        "BUY": "signal-buy",
+        "HOLD": "signal-hold",
+        "WAIT": "signal-wait",
+        "SELL": "signal-reduce",
+        "EXIT": "signal-exit"
+    }.get(
+        decision,
+        "signal-wait"
     )
+
+
+def zone_symbol(zone):
+
+    text = str(zone).upper()
+
+    if "BULL" in text or "POSITIVE" in text or "STRONG" in text:
+        return "🟢📈"
+
+    if "BEAR" in text or "WEAK" in text or "POOR" in text:
+        return "🔴📉"
+
+    if "AVERAGE" in text or "NEUTRAL" in text:
+        return "🟡↔️"
+
+    return "⚪"
+
+
+def alignment_symbol(alignment):
+
+    text = str(alignment).upper()
+
+    if "BULL" in text:
+        return "🟢📈 BULLISH"
+
+    if "BEAR" in text:
+        return "🔴📉 BEARISH"
+
+    if "MIX" in text:
+        return "🟡↔️ MIXED"
+
+    return "⚪ NO DATA"
+
+
+def trend_symbol(trend):
+
+    text = str(trend).upper()
+
+    if "BULL" in text:
+        return "🟢🐂 BULLISH"
+
+    if "BEAR" in text:
+        return "🔴🐻 BEARISH"
+
+    return "🟡↔️ NEUTRAL"
+
+
+def breakout_symbol(value):
+
+    text = str(value).upper()
+
+    if text in ["YES", "TRUE", "1", "BREAKOUT"]:
+        return "🟢🚀 YES"
+
+    if text in ["NO", "FALSE", "0"]:
+        return "🔴 NO"
+
+    return "⚪ —"
 
 
 # =========================================================
@@ -461,15 +541,18 @@ def color_card(label, val, cls="blue-card"):
 def calculate_atr(df, period=14):
 
     high = pd.to_numeric(
-        df["High"], errors="coerce"
+        df["High"],
+        errors="coerce"
     )
 
     low = pd.to_numeric(
-        df["Low"], errors="coerce"
+        df["Low"],
+        errors="coerce"
     )
 
     close = pd.to_numeric(
-        df["Close"], errors="coerce"
+        df["Close"],
+        errors="coerce"
     )
 
     previous_close = close.shift(1)
@@ -484,16 +567,57 @@ def calculate_atr(df, period=14):
         low - previous_close
     ).abs()
 
-    tr = pd.concat(
-        [tr1, tr2, tr3],
+    true_range = pd.concat(
+        [
+            tr1,
+            tr2,
+            tr3
+        ],
         axis=1
     ).max(axis=1)
 
-    return tr.rolling(period).mean()
+    return (
+        true_range
+        .rolling(period)
+        .mean()
+    )
 
 
 # =========================================================
-# ADVANCED CHART
+# YFINANCE CHART CACHE
+# =========================================================
+
+@st.cache_data(
+    ttl=300,
+    show_spinner=False
+)
+def download_chart_data(symbol):
+
+    ticker_symbol = (
+        clean_symbol(symbol)
+        + ".NS"
+    )
+
+    try:
+
+        data = yf.download(
+            ticker_symbol,
+            period="2y",
+            interval="1d",
+            auto_adjust=False,
+            progress=False,
+            threads=False
+        )
+
+        return data
+
+    except Exception:
+
+        return pd.DataFrame()
+
+
+# =========================================================
+# ADVANCED PRICE CHART
 # =========================================================
 
 def build_price_chart(
@@ -510,31 +634,33 @@ def build_price_chart(
         unsafe_allow_html=True
     )
 
-    ticker = clean_symbol(symbol) + ".NS"
+    data = download_chart_data(
+        symbol
+    )
+
+    if data.empty:
+
+        st.warning(
+            "⚠️ Yahoo Finance data હાલમાં unavailable / rate-limit છે. "
+            "Stock analysis ચાલુ રહેશે; chart પછી ફરી load થશે."
+        )
+
+        return
 
     try:
 
-        data = yf.download(
-            ticker,
-            period="2y",
-            interval="1d",
-            auto_adjust=False,
-            progress=False
-        )
-
-        if data.empty:
-            st.caption(
-                "📊 Historical chart data ઉપલબ્ધ નથી."
-            )
-            return
+        # -------------------------------------------------
+        # MULTIINDEX
+        # -------------------------------------------------
 
         if isinstance(
             data.columns,
             pd.MultiIndex
         ):
+
             data.columns = [
-                c[0]
-                for c in data.columns
+                col[0]
+                for col in data.columns
             ]
 
         required = [
@@ -545,41 +671,65 @@ def build_price_chart(
             "Volume"
         ]
 
-        if any(
-            c not in data.columns
-            for c in required
+        if not all(
+            col in data.columns
+            for col in required
         ):
-            st.caption(
-                "📊 Chart data incomplete."
+
+            st.warning(
+                "⚠️ Chart data incomplete."
             )
+
             return
 
-        data = data[required].copy()
+        data = data[
+            required
+        ].copy()
 
-        for c in required:
-            data[c] = pd.to_numeric(
-                data[c],
+        for col in required:
+
+            data[col] = pd.to_numeric(
+                data[col],
                 errors="coerce"
             )
 
-        data.dropna(inplace=True)
+        data.dropna(
+            inplace=True
+        )
 
         if len(data) < 50:
+
+            st.warning(
+                "⚠️ Historical chart data ઓછો છે."
+            )
+
             return
 
         close = data["Close"]
 
+        # -------------------------------------------------
         # EMA
-        for p in [10,20,50,100,200]:
+        # -------------------------------------------------
 
-            data[f"EMA{p}"] = (
-                close.ewm(
-                    span=p,
-                    adjust=False
-                ).mean()
-            )
+        for period in [
+            10,
+            20,
+            50,
+            100,
+            200
+        ]:
 
+            data[
+                f"EMA{period}"
+            ] = close.ewm(
+                span=period,
+                adjust=False
+            ).mean()
+
+        # -------------------------------------------------
         # RSI
+        # -------------------------------------------------
+
         delta = close.diff()
 
         gain = (
@@ -594,17 +744,26 @@ def build_price_chart(
             .mean()
         )
 
-        rs = gain / loss.replace(
-            0,
-            np.nan
+        rs = (
+            gain /
+            loss.replace(
+                0,
+                np.nan
+            )
         )
 
         data["RSI"] = (
             100 -
-            100 / (1 + rs)
+            (
+                100 /
+                (1 + rs)
+            )
         )
 
+        # -------------------------------------------------
         # MACD
+        # -------------------------------------------------
+
         ema12 = close.ewm(
             span=12,
             adjust=False
@@ -615,7 +774,9 @@ def build_price_chart(
             adjust=False
         ).mean()
 
-        data["MACD"] = ema12 - ema26
+        data["MACD"] = (
+            ema12 - ema26
+        )
 
         data["MACD_SIGNAL"] = (
             data["MACD"]
@@ -632,7 +793,10 @@ def build_price_chart(
             data["MACD_SIGNAL"]
         )
 
-        # Volume
+        # -------------------------------------------------
+        # VOLUME
+        # -------------------------------------------------
+
         data["VOL20"] = (
             data["Volume"]
             .rolling(20)
@@ -645,7 +809,10 @@ def build_price_chart(
             data["VOL20"]
         )
 
-        # Breakout
+        # -------------------------------------------------
+        # BREAKOUT
+        # -------------------------------------------------
+
         data["PREVIOUS_20_HIGH"] = (
             data["High"]
             .rolling(20)
@@ -659,7 +826,13 @@ def build_price_chart(
             data["PREVIOUS_20_HIGH"]
         )
 
-        cmp = float(close.iloc[-1])
+        cmp = float(
+            close.iloc[-1]
+        )
+
+        # -------------------------------------------------
+        # 52 WEEK
+        # -------------------------------------------------
 
         one_year = data.tail(252)
 
@@ -671,16 +844,33 @@ def build_price_chart(
             one_year["Low"].min()
         )
 
+        # -------------------------------------------------
+        # ATR
+        # -------------------------------------------------
+
         atr_series = (
-            calculate_atr(data)
+            calculate_atr(
+                data
+            )
             .dropna()
         )
 
-        atr = (
-            float(atr_series.iloc[-1])
-            if not atr_series.empty
-            else max(cmp * 0.02, 1)
-        )
+        if atr_series.empty:
+
+            atr = max(
+                cmp * 0.02,
+                1
+            )
+
+        else:
+
+            atr = float(
+                atr_series.iloc[-1]
+            )
+
+        # -------------------------------------------------
+        # TARGET FALLBACK
+        # -------------------------------------------------
 
         stop_loss = safe_float(
             stop_loss,
@@ -697,11 +887,15 @@ def build_price_chart(
             cmp + 5 * atr
         )
 
-        ema10 = float(
+        # -------------------------------------------------
+        # MOMENTUM
+        # -------------------------------------------------
+
+        ema10 = safe_float(
             data["EMA10"].iloc[-1]
         )
 
-        ema20 = float(
+        ema20 = safe_float(
             data["EMA20"].iloc[-1]
         )
 
@@ -728,18 +922,32 @@ def build_price_chart(
 
         momentum_ready = (
             ema10 > ema20
-            and rsi >= 55
-            and macd > macd_signal
-            and vol_ratio >= 1.2
+            and
+            rsi >= 55
+            and
+            macd > macd_signal
+            and
+            vol_ratio >= 1.2
         )
+
+        # -------------------------------------------------
+        # FIGURE
+        # -------------------------------------------------
 
         fig = make_subplots(
             rows=2,
             cols=1,
             shared_xaxes=True,
             vertical_spacing=0.025,
-            row_heights=[0.78,0.22]
+            row_heights=[
+                0.78,
+                0.22
+            ]
         )
+
+        # -------------------------------------------------
+        # CANDLE
+        # -------------------------------------------------
 
         fig.add_trace(
             go.Candlestick(
@@ -754,13 +962,19 @@ def build_price_chart(
             col=1
         )
 
-        for column,name,width in [
-            ("EMA10","EMA 10",1.1),
-            ("EMA20","EMA 20",1.1),
-            ("EMA50","EMA 50",1.4),
-            ("EMA100","EMA 100",1.4),
-            ("EMA200","EMA 200",1.8)
-        ]:
+        # -------------------------------------------------
+        # EMA
+        # -------------------------------------------------
+
+        ema_settings = [
+            ("EMA10", "EMA 10", 1.1),
+            ("EMA20", "EMA 20", 1.1),
+            ("EMA50", "EMA 50", 1.3),
+            ("EMA100", "EMA 100", 1.4),
+            ("EMA200", "EMA 200", 1.7)
+        ]
+
+        for column, name, width in ema_settings:
 
             fig.add_trace(
                 go.Scatter(
@@ -768,11 +982,17 @@ def build_price_chart(
                     y=data[column],
                     name=name,
                     mode="lines",
-                    line=dict(width=width)
+                    line=dict(
+                        width=width
+                    )
                 ),
                 row=1,
                 col=1
             )
+
+        # -------------------------------------------------
+        # VOLUME
+        # -------------------------------------------------
 
         fig.add_trace(
             go.Bar(
@@ -784,6 +1004,10 @@ def build_price_chart(
             row=2,
             col=1
         )
+
+        # -------------------------------------------------
+        # BREAKOUT
+        # -------------------------------------------------
 
         breakout_data = data[
             data["BREAKOUT"]
@@ -806,14 +1030,24 @@ def build_price_chart(
                 col=1
             )
 
+        # -------------------------------------------------
+        # MOMENTUM
+        # -------------------------------------------------
+
         if momentum_ready:
 
             fig.add_trace(
                 go.Scatter(
-                    x=[data.index[-1]],
-                    y=[cmp],
+                    x=[
+                        data.index[-1]
+                    ],
+                    y=[
+                        cmp
+                    ],
                     mode="markers+text",
-                    text=["⚡ MOMENTUM"],
+                    text=[
+                        "⚡ MOMENTUM"
+                    ],
                     textposition="top center",
                     name="⚡ Momentum"
                 ),
@@ -821,16 +1055,44 @@ def build_price_chart(
                 col=1
             )
 
+        # -------------------------------------------------
+        # LEVELS
+        # -------------------------------------------------
+
         levels = [
-            (cmp, f"CMP ₹{cmp:,.2f}", "dot"),
-            (stop_loss, f"🛑 SL ₹{stop_loss:,.2f}", "dash"),
-            (swing_target, f"🎯 SWING ₹{swing_target:,.2f}", "dot"),
-            (long_target, f"🚀 LONG ₹{long_target:,.2f}", "dot"),
-            (high_52, f"52W HIGH ₹{high_52:,.2f}", "dashdot"),
-            (low_52, f"52W LOW ₹{low_52:,.2f}", "dashdot")
+            (
+                cmp,
+                f"CMP ₹{cmp:,.2f}",
+                "dot"
+            ),
+            (
+                stop_loss,
+                f"🛑 SL ₹{stop_loss:,.2f}",
+                "dash"
+            ),
+            (
+                swing_target,
+                f"🎯 SWING ₹{swing_target:,.2f}",
+                "dot"
+            ),
+            (
+                long_target,
+                f"🚀 LONG ₹{long_target:,.2f}",
+                "dot"
+            ),
+            (
+                high_52,
+                f"52W HIGH ₹{high_52:,.2f}",
+                "dashdot"
+            ),
+            (
+                low_52,
+                f"52W LOW ₹{low_52:,.2f}",
+                "dashdot"
+            )
         ]
 
-        for level,label,dash in levels:
+        for level, label, dash in levels:
 
             fig.add_hline(
                 y=level,
@@ -842,48 +1104,73 @@ def build_price_chart(
                 annotation_position="top right"
             )
 
+        # -------------------------------------------------
+        # RANGE
+        # -------------------------------------------------
+
         buttons = [
+
             dict(
                 count=1,
                 label="1M",
                 step="month",
                 stepmode="backward"
             ),
+
             dict(
                 count=3,
                 label="3M",
                 step="month",
                 stepmode="backward"
             ),
+
             dict(
                 count=6,
                 label="6M",
                 step="month",
                 stepmode="backward"
             ),
+
             dict(
                 count=1,
                 label="1Y",
                 step="year",
                 stepmode="backward"
             ),
+
             dict(
                 step="all",
                 label="ALL"
             )
         ]
 
+        # -------------------------------------------------
+        # LAYOUT
+        # -------------------------------------------------
+
         fig.update_layout(
-            height=620,
+
+            height=650,
+
             template="plotly_dark",
+
             paper_bgcolor="#050505",
+
             plot_bgcolor="#050505",
+
             hovermode="x unified",
+
             dragmode="pan",
+
             margin=dict(
-                l=5,r=5,t=45,b=5
+                l=5,
+                r=5,
+                t=45,
+                b=5
             ),
+
             showlegend=True,
+
             legend=dict(
                 orientation="h",
                 yanchor="bottom",
@@ -891,6 +1178,7 @@ def build_price_chart(
                 xanchor="center",
                 x=0.5
             ),
+
             xaxis=dict(
                 type="date",
                 fixedrange=False,
@@ -902,14 +1190,17 @@ def build_price_chart(
                     buttons=buttons
                 )
             ),
+
             xaxis2=dict(
                 type="date",
                 fixedrange=False
             ),
+
             yaxis=dict(
                 fixedrange=False,
                 autorange=True
             ),
+
             yaxis2=dict(
                 fixedrange=False,
                 autorange=True
@@ -917,11 +1208,17 @@ def build_price_chart(
         )
 
         config = {
+
             "displaylogo": False,
+
             "responsive": True,
+
             "scrollZoom": True,
+
             "doubleClick": "reset",
+
             "displayModeBar": True,
+
             "modeBarButtonsToRemove": [
                 "lasso2d",
                 "select2d"
@@ -959,16 +1256,17 @@ def build_price_chart(
             )
 
         st.caption(
-            f"📍 CMP {money(cmp)}  |  "
-            f"🛑 SL {money(stop_loss)}  |  "
-            f"🎯 Swing {money(swing_target)}  |  "
+            f"📍 CMP {money(cmp)} | "
+            f"🛑 SL {money(stop_loss)} | "
+            f"🎯 Swing {money(swing_target)} | "
             f"🚀 Long {money(long_target)}"
         )
 
     except Exception as error:
 
-        st.error(
-            f"📊 Chart Error: {type(error).__name__}: {error}"
+        st.warning(
+            f"📊 Chart unavailable: "
+            f"{type(error).__name__}"
         )
 
 
@@ -976,17 +1274,24 @@ def build_price_chart(
 # HEADER
 # =========================================================
 
-st.markdown("""
-<div class="rs-header">
-    <div class="rs-title">
+st.markdown(
+    """
+    <div class="main-title">
         📈 R.S MASTER STOCK GUIDE V2
     </div>
-    <div class="rs-subtitle">
-        NSE • Technical • Fundamental • Momentum • Breakout •
-        Exit Matra • Risk • Target
+    """,
+    unsafe_allow_html=True
+)
+
+st.markdown(
+    """
+    <div class="sub-title">
+        NSE • Technical • Fundamental • Momentum •
+        Breakout • Exit Matra • Risk • Target
     </div>
-</div>
-""", unsafe_allow_html=True)
+    """,
+    unsafe_allow_html=True
+)
 
 st.divider()
 
@@ -1047,15 +1352,19 @@ all_scores = []
 
 for raw_symbol in portfolio["SYMBOL"]:
 
-    symbol = clean_symbol(raw_symbol)
+    symbol = clean_symbol(
+        raw_symbol
+    )
 
-    # -----------------------------------------------------
+    # =====================================================
     # NSE
-    # -----------------------------------------------------
+    # =====================================================
 
     try:
 
-        result = fetch_nse_data(symbol)
+        result = fetch_nse_data(
+            symbol
+        )
 
     except Exception as error:
 
@@ -1066,7 +1375,10 @@ for raw_symbol in portfolio["SYMBOL"]:
         continue
 
 
-    if not isinstance(result, dict):
+    if not isinstance(
+        result,
+        dict
+    ):
 
         st.error(
             f"{symbol}: NSE response invalid."
@@ -1075,23 +1387,25 @@ for raw_symbol in portfolio["SYMBOL"]:
         continue
 
 
-    # -----------------------------------------------------
+    # =====================================================
     # FUNDAMENTAL
-    # -----------------------------------------------------
+    # =====================================================
 
     try:
 
         fundamental = (
-            fetch_fundamental_data(symbol)
+            fetch_fundamental_data(
+                symbol
+            )
         )
 
     except Exception as error:
 
         fundamental = {
-            "FUNDAMENTAL_SCORE":0,
-            "FUNDAMENTAL_ZONE":"DATA ERROR",
-            "DATA_QUALITY_%":0,
-            "ERROR":str(error)
+            "FUNDAMENTAL_SCORE": 0,
+            "FUNDAMENTAL_ZONE": "DATA ERROR",
+            "DATA_QUALITY_%": 0,
+            "ERROR": str(error)
         }
 
 
@@ -1103,72 +1417,126 @@ for raw_symbol in portfolio["SYMBOL"]:
         fundamental = {}
 
 
-    # -----------------------------------------------------
-    # SCORE
-    # -----------------------------------------------------
+    # =====================================================
+    # SCORES
+    # =====================================================
 
     technical_score = safe_float(
-        result.get("TECHNICAL_SCORE")
+        result.get(
+            "TECHNICAL_SCORE"
+        )
     )
 
     fundamental_score = safe_float(
-        fundamental.get("FUNDAMENTAL_SCORE")
+        fundamental.get(
+            "FUNDAMENTAL_SCORE"
+        )
     )
 
     risk_score = safe_float(
-        result.get("RISK_SCORE")
+        result.get(
+            "RISK_SCORE"
+        )
     )
 
+
+    # =====================================================
+    # MASTER SCORE
+    # =====================================================
+
     master_score = round(
-        technical_score * 0.40
-        +
-        fundamental_score * 0.40
-        +
-        risk_score * 0.20,
+        (
+            technical_score * 0.40
+            +
+            fundamental_score * 0.40
+            +
+            risk_score * 0.20
+        ),
         1
     )
 
 
-    decision_text, decision_kind, decision_reason = (
-        decision_info(master_score)
-    )
+    # =====================================================
+    # DECISION
+    # =====================================================
 
-    market_zone, market_class = (
-        market_info(master_score)
-    )
+    if master_score >= 75:
+
+        decision = "BUY"
+
+        decision_text = (
+            "BUY / વધારો"
+        )
+
+    elif master_score >= 60:
+
+        decision = "HOLD"
+
+        decision_text = (
+            "HOLD / જાળવો"
+        )
+
+    elif master_score >= 45:
+
+        decision = "WAIT"
+
+        decision_text = (
+            "WAIT / રાહ જુઓ"
+        )
+
+    elif master_score >= 30:
+
+        decision = "SELL"
+
+        decision_text = (
+            "REDUCE / ઘટાડો"
+        )
+
+    else:
+
+        decision = "EXIT"
+
+        decision_text = (
+            "EXIT / બહાર નીકળો"
+        )
 
 
-    # -----------------------------------------------------
-    # PRICE
-    # -----------------------------------------------------
+    # =====================================================
+    # EXIT MATRA
+    # =====================================================
 
     cmp = safe_float(
-        result.get("CMP")
+        result.get(
+            "CMP"
+        )
     )
 
     stop_loss = safe_float(
-        result.get("STOP_LOSS"),
+        result.get(
+            "STOP_LOSS"
+        ),
         cmp * 0.95
     )
 
     swing_target = safe_float(
-        result.get("SWING_TARGET"),
+        result.get(
+            "SWING_TARGET"
+        ),
         cmp * 1.08
     )
 
     long_target = safe_float(
-        result.get("LONG_TERM_TARGET"),
+        result.get(
+            "LONG_TERM_TARGET"
+        ),
         cmp * 1.20
     )
 
 
-    # -----------------------------------------------------
-    # EXIT MATRA
-    # -----------------------------------------------------
-
     exit_signal = "HOLD"
 
     exit_reason = "Setup active"
+
 
     if cmp > 0:
 
@@ -1176,13 +1544,17 @@ for raw_symbol in portfolio["SYMBOL"]:
 
             exit_signal = "EXIT"
 
-            exit_reason = "Stop-loss breached"
+            exit_reason = (
+                "Stop-loss breached"
+            )
 
         elif master_score < 30:
 
             exit_signal = "EXIT"
 
-            exit_reason = "Master score weak"
+            exit_reason = (
+                "Master score weak"
+            )
 
         elif (
             technical_score < 35
@@ -1205,85 +1577,162 @@ for raw_symbol in portfolio["SYMBOL"]:
             )
 
 
-    # -----------------------------------------------------
+    # =====================================================
+    # MARKET ZONE
+    # =====================================================
+
+    if master_score >= 75:
+
+        market_zone = "🐂 BULL"
+
+    elif master_score >= 55:
+
+        market_zone = "🟡 NEUTRAL"
+
+    else:
+
+        market_zone = "🐻 BEAR"
+
+
+    # =====================================================
     # STOCK CARD
-    # -----------------------------------------------------
+    # =====================================================
 
     st.markdown(
         '<div class="stock-card">',
         unsafe_allow_html=True
     )
 
-    st.markdown(
-        f'<div class="stock-name">📌 {symbol}</div>',
-        unsafe_allow_html=True
+    st.subheader(
+        f"📌 {symbol}"
     )
 
 
-    # -----------------------------------------------------
-    # PRICE CARDS
-    # -----------------------------------------------------
+    # =====================================================
+    # PRICE
+    # =====================================================
 
-    p1,p2,p3 = st.columns(3)
+    p1, p2, p3 = st.columns(3)
 
     with p1:
-        color_card(
+
+        st.metric(
             "CMP",
-            money(cmp),
-            "blue-card"
+            money(cmp)
         )
 
     with p2:
-        color_card(
+
+        st.metric(
             "CHANGE",
-            pct(result.get("CHANGE_%")),
-            "green-card"
+            pct(
+                result.get(
+                    "CHANGE_%"
+                )
+            )
         )
 
     with p3:
-        color_card(
+
+        st.metric(
             "MOMENTUM",
             display_value(
-                result.get("MOMENTUM_LEVEL")
-            ),
-            "purple-card"
+                result.get(
+                    "MOMENTUM_LEVEL"
+                )
+            )
         )
 
 
-    # -----------------------------------------------------
+    # =====================================================
     # MASTER SCORE
-    # -----------------------------------------------------
+    # =====================================================
 
-    st.markdown(
-        score_html(master_score),
-        unsafe_allow_html=True
-    )
+    score_color = "#00e676"
 
+    if master_score < 30:
+        score_color = "#ff304f"
 
-    # -----------------------------------------------------
-    # DECISION
-    # -----------------------------------------------------
+    elif master_score < 45:
+        score_color = "#ff9800"
+
+    elif master_score < 60:
+        score_color = "#ffea00"
+
+    elif master_score < 75:
+        score_color = "#00b0ff"
+
 
     st.markdown(
         f"""
-        <div class="signal-box {signal_class(decision_kind)}">
-            {decision_text}
-            <div class="signal-small">
-                {decision_reason}
+        <div class="score-card">
+
+            <div class="score-title">
+                🏦 MASTER SCORE
             </div>
+
+            <div
+                class="score-number"
+                style="color:{score_color};"
+            >
+                {master_score}
+                <span
+                    style="
+                    font-size:0.8rem;
+                    opacity:0.55;
+                    "
+                >
+                    /100
+                </span>
+            </div>
+
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+    # REAL STREAMLIT PROGRESS BAR
+    st.progress(
+        min(
+            max(
+                int(master_score),
+                0
+            ),
+            100
+        )
+    )
+
+
+    # =====================================================
+    # DECISION SIGNAL
+    # =====================================================
+
+    dclass = decision_class(
+        decision
+    )
+
+    dsymbol = signal_symbol(
+        decision
+    )
+
+    st.markdown(
+        f"""
+        <div class="signal-box {dclass}">
+            {dsymbol}
+            {decision_text}
         </div>
         """,
         unsafe_allow_html=True
     )
 
 
-    # -----------------------------------------------------
-    # MARKET
-    # -----------------------------------------------------
+    # =====================================================
+    # MARKET ZONE
+    # =====================================================
 
     st.markdown(
         f"""
-        <div class="signal-box {market_class}">
+        <div class="signal-box signal-reduce">
             {market_zone}
         </div>
         """,
@@ -1291,79 +1740,91 @@ for raw_symbol in portfolio["SYMBOL"]:
     )
 
 
-    # -----------------------------------------------------
+    # =====================================================
     # EXIT MATRA
-    # -----------------------------------------------------
+    # =====================================================
 
     st.markdown(
-        '<div class="section-title">🚪 EXIT MATRA</div>',
+        '<div class="section-title">'
+        '🚪 EXIT MATRA'
+        '</div>',
         unsafe_allow_html=True
     )
 
-    ex1,ex2 = st.columns(2)
+    ex1, ex2 = st.columns(2)
 
     with ex1:
 
-        color_card(
+        exit_icon = {
+            "EXIT": "🔴",
+            "REDUCE": "🟠",
+            "HOLD": "🟢",
+            "BOOK": "💰"
+        }.get(
+            exit_signal,
+            "⚪"
+        )
+
+        st.metric(
             "EXIT SIGNAL",
-            (
-                "🔴 " + exit_signal
-                if exit_signal == "EXIT"
-                else
-                "🟢 " + exit_signal
-            ),
-            (
-                "red-card"
-                if exit_signal == "EXIT"
-                else "green-card"
-            )
+            f"{exit_icon} {exit_signal}"
         )
 
     with ex2:
 
-        color_card(
+        st.metric(
             "REASON",
-            exit_reason,
-            "orange-card"
+            exit_reason
         )
 
 
-    # -----------------------------------------------------
+    # =====================================================
     # TARGET
-    # -----------------------------------------------------
+    # =====================================================
 
     st.markdown(
-        '<div class="section-title">🎯 TARGET & RISK</div>',
+        '<div class="section-title">'
+        '🎯 TARGET & RISK'
+        '</div>',
         unsafe_allow_html=True
     )
 
-    t1,t2,t3 = st.columns(3)
+    t1, t2, t3 = st.columns(3)
 
     with t1:
-        color_card(
-            "🎯 SWING",
-            money(swing_target),
-            "green-card"
+
+        st.markdown(
+            '<div class="data-box target-swing">'
+            '<div class="data-label">🎯 SWING</div>'
+            f'<div class="data-value">{money(swing_target)}</div>'
+            '</div>',
+            unsafe_allow_html=True
         )
 
     with t2:
-        color_card(
-            "🚀 LONG",
-            money(long_target),
-            "purple-card"
+
+        st.markdown(
+            '<div class="data-box target-long">'
+            '<div class="data-label">🚀 LONG</div>'
+            f'<div class="data-value">{money(long_target)}</div>'
+            '</div>',
+            unsafe_allow_html=True
         )
 
     with t3:
-        color_card(
-            "🛑 STOP LOSS",
-            money(stop_loss),
-            "red-card"
+
+        st.markdown(
+            '<div class="data-box target-sl">'
+            '<div class="data-label">🛑 STOP LOSS</div>'
+            f'<div class="data-value">{money(stop_loss)}</div>'
+            '</div>',
+            unsafe_allow_html=True
         )
 
 
-    # -----------------------------------------------------
+    # =====================================================
     # CHART
-    # -----------------------------------------------------
+    # =====================================================
 
     build_price_chart(
         symbol,
@@ -1373,294 +1834,270 @@ for raw_symbol in portfolio["SYMBOL"]:
     )
 
 
-    # -----------------------------------------------------
+    # =====================================================
     # TECHNICAL
-    # -----------------------------------------------------
+    # =====================================================
 
     st.markdown(
-        '<div class="section-title">📈 TECHNICAL</div>',
+        '<div class="section-title">'
+        '📈 TECHNICAL'
+        '</div>',
         unsafe_allow_html=True
     )
 
-    tc1,tc2,tc3 = st.columns(3)
+    tc1, tc2, tc3 = st.columns(3)
 
     with tc1:
-        color_card(
+
+        st.metric(
             "TECHNICAL",
-            f"{technical_score:.0f}/100",
-            (
-                "green-card"
-                if technical_score >= 60
-                else
-                "orange-card"
-                if technical_score >= 40
-                else
-                "red-card"
-            )
+            f"{technical_score:.0f}/100"
         )
 
     with tc2:
-        color_card(
+
+        tech_zone = display_value(
+            result.get(
+                "TECHNICAL_ZONE"
+            )
+        )
+
+        st.metric(
             "ZONE",
-            display_value(
-                result.get("TECHNICAL_ZONE")
-            ),
-            "blue-card"
+            f"{zone_symbol(tech_zone)} {tech_zone}"
         )
 
     with tc3:
-        color_card(
+
+        st.metric(
             "RSI",
-            number2(
-                result.get("RSI_14")
-            ),
-            (
-                "green-card"
-                if safe_float(result.get("RSI_14")) >= 50
-                else
-                "red-card"
+            num2(
+                result.get(
+                    "RSI_14"
+                )
             )
         )
 
 
-    # -----------------------------------------------------
+    # =====================================================
     # EMA
-    # -----------------------------------------------------
+    # =====================================================
 
     st.caption(
         "📊 EMA 10 / 20 / 50 / 100 / 200"
     )
 
-    e1,e2,e3,e4,e5 = st.columns(5)
+    e1, e2, e3, e4, e5 = st.columns(5)
 
-    ema_values = [
-        ("10","EMA_10"),
-        ("20","EMA_20"),
-        ("50","EMA_50"),
-        ("100","EMA_100"),
-        ("200","EMA_200")
-    ]
-
-    for col,(label,key) in zip(
-        [e1,e2,e3,e4,e5],
-        ema_values
-    ):
-
-        with col:
-
-            color_card(
-                label,
-                money(result.get(key)),
-                "blue-card"
+    with e1:
+        st.metric(
+            "10",
+            money(
+                result.get(
+                    "EMA_10"
+                )
             )
+        )
+
+    with e2:
+        st.metric(
+            "20",
+            money(
+                result.get(
+                    "EMA_20"
+                )
+            )
+        )
+
+    with e3:
+        st.metric(
+            "50",
+            money(
+                result.get(
+                    "EMA_50"
+                )
+            )
+        )
+
+    with e4:
+        st.metric(
+            "100",
+            money(
+                result.get(
+                    "EMA_100"
+                )
+            )
+        )
+
+    with e5:
+        st.metric(
+            "200",
+            money(
+                result.get(
+                    "EMA_200"
+                )
+            )
+        )
 
 
     alignment = display_value(
-        result.get("EMA_ALIGNMENT")
+        result.get(
+            "EMA_ALIGNMENT"
+        )
     )
 
-    alignment_text = str(alignment)
+    st.markdown(
+        f"""
+        <div class="data-box">
+            <div class="data-label">
+                EMA ALIGNMENT
+            </div>
 
-    if "BULL" in alignment_text.upper():
-
-        align_class = "green-card"
-        align_symbol = "🟢📈"
-
-    elif "BEAR" in alignment_text.upper():
-
-        align_class = "red-card"
-        align_symbol = "🔴📉"
-
-    else:
-
-        align_class = "yellow-card"
-        align_symbol = "🟡↔️"
-
-
-    color_card(
-        "EMA ALIGNMENT",
-        f"{align_symbol} {alignment}",
-        align_class
+            <div class="data-value">
+                {alignment_symbol(alignment)}
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True
     )
 
 
-    # -----------------------------------------------------
-    # RSI MACD
-    # -----------------------------------------------------
+    # =====================================================
+    # RSI / MACD
+    # =====================================================
 
-    m1,m2,m3 = st.columns(3)
+    m1, m2, m3 = st.columns(3)
 
     with m1:
 
-        color_card(
+        st.metric(
             "RSI 14",
-            number2(
-                result.get("RSI_14")
-            ),
-            "blue-card"
+            num2(
+                result.get(
+                    "RSI_14"
+                )
+            )
         )
 
     with m2:
 
-        macd_value = safe_float(
-            result.get("MACD"),
-            np.nan
-        )
-
-        color_card(
+        st.metric(
             "MACD",
-            number2(macd_value),
-            (
-                "green-card"
-                if macd_value > 0
-                else "red-card"
+            num2(
+                result.get(
+                    "MACD"
+                )
             )
         )
 
     with m3:
 
-        hist = safe_float(
-            result.get("MACD_HIST"),
-            np.nan
-        )
-
-        color_card(
+        st.metric(
             "HISTOGRAM",
-            number2(hist),
-            (
-                "green-card"
-                if hist > 0
-                else "red-card"
+            num2(
+                result.get(
+                    "MACD_HIST"
+                )
             )
         )
 
 
-    # -----------------------------------------------------
+    # =====================================================
     # TREND
-    # -----------------------------------------------------
+    # =====================================================
 
-    st.caption(
-        "🧭 Trend / CPR / Pivot"
+    st.markdown(
+        '<div class="section-title">'
+        '🧭 TREND / CPR / PIVOT'
+        '</div>',
+        unsafe_allow_html=True
     )
 
-    s1,s2,s3 = st.columns(3)
+    s1, s2, s3 = st.columns(3)
 
     with s1:
 
-        color_card(
+        st.metric(
             "SUPERTREND",
             money(
-                result.get("SUPERTREND")
-            ),
-            "purple-card"
+                result.get(
+                    "SUPERTREND"
+                )
+            )
         )
 
     with s2:
 
         trend = display_value(
-            result.get("SUPERTREND_STATUS")
+            result.get(
+                "SUPERTREND_STATUS"
+            )
         )
 
-        trend_text = str(trend).upper()
-
-        if "BULL" in trend_text:
-
-            cls = "green-card"
-            sym = "🟢🐂"
-
-        elif "BEAR" in trend_text:
-
-            cls = "red-card"
-            sym = "🔴🐻"
-
-        else:
-
-            cls = "yellow-card"
-            sym = "🟡↔️"
-
-        color_card(
+        st.metric(
             "TREND",
-            f"{sym} {trend}",
-            cls
+            trend_symbol(
+                trend
+            )
         )
 
     with s3:
 
-        color_card(
+        st.metric(
             "PIVOT",
             money(
-                result.get("PIVOT")
-            ),
-            "blue-card"
+                result.get(
+                    "PIVOT"
+                )
+            )
         )
 
 
-    # -----------------------------------------------------
+    # =====================================================
     # VOLUME
-    # -----------------------------------------------------
+    # =====================================================
 
-    v1,v2,v3 = st.columns(3)
+    v1, v2, v3 = st.columns(3)
 
     with v1:
 
-        color_card(
+        st.metric(
             "VOLUME",
-            display_value(
-                result.get("VOLUME")
-            ),
-            "blue-card"
+            integer(
+                result.get(
+                    "VOLUME"
+                )
+            )
         )
 
     with v2:
 
         ratio = safe_float(
-            result.get("VOLUME_RATIO")
+            result.get(
+                "VOLUME_RATIO"
+            )
         )
 
-        color_card(
+        st.metric(
             "VOLUME RATIO",
-            f"{ratio:.2f}x",
-            (
-                "green-card"
-                if ratio >= 1.2
-                else "yellow-card"
-            )
+            f"{ratio:.2f}x"
         )
 
     with v3:
 
-        breakout = display_value(
-            result.get("VOLUME_BREAKOUT")
-        )
-
-        breakout_text = str(
-            breakout
-        ).upper()
-
-        if breakout_text in [
-            "YES",
-            "TRUE",
-            "1"
-        ]:
-
-            breakout_display = "🚀 YES"
-            breakout_class = "green-card"
-
-        else:
-
-            breakout_display = "🔴 NO"
-            breakout_class = "red-card"
-
-        color_card(
+        st.metric(
             "BREAKOUT",
-            breakout_display,
-            breakout_class
+            breakout_symbol(
+                result.get(
+                    "VOLUME_BREAKOUT"
+                )
+            )
         )
 
 
-    # -----------------------------------------------------
+    # =====================================================
     # FUNDAMENTAL
-    # -----------------------------------------------------
+    # =====================================================
 
     st.markdown(
         '<div class="section-title">'
@@ -1669,333 +2106,343 @@ for raw_symbol in portfolio["SYMBOL"]:
         unsafe_allow_html=True
     )
 
-    f1,f2,f3 = st.columns(3)
+    f1, f2, f3 = st.columns(3)
 
     with f1:
 
-        color_card(
+        st.metric(
             "FUNDAMENTAL",
-            f"{fundamental_score:.0f}/100",
-            (
-                "green-card"
-                if fundamental_score >= 60
-                else
-                "orange-card"
-                if fundamental_score >= 40
-                else
-                "red-card"
-            )
+            f"{fundamental_score:.0f}/100"
         )
 
     with f2:
 
-        color_card(
+        fzone = display_value(
+            fundamental.get(
+                "FUNDAMENTAL_ZONE"
+            )
+        )
+
+        st.metric(
             "ZONE",
-            display_value(
-                fundamental.get(
-                    "FUNDAMENTAL_ZONE"
-                )
-            ),
-            "blue-card"
+            f"{zone_symbol(fzone)} {fzone}"
         )
 
     with f3:
 
-        quality = safe_float(
-            fundamental.get(
-                "DATA_QUALITY_%"
+        st.metric(
+            "QUALITY",
+            pct(
+                fundamental.get(
+                    "DATA_QUALITY_%"
+                )
             )
         )
 
-        color_card(
-            "QUALITY",
-            f"{quality:.2f}%",
-            "purple-card"
-        )
 
-
-    f4,f5,f6 = st.columns(3)
+    f4, f5, f6 = st.columns(3)
 
     with f4:
 
-        color_card(
+        st.metric(
             "REVENUE GROWTH",
             pct(
                 fundamental.get(
                     "REVENUE_GROWTH_%"
                 )
-            ),
-            (
-                "green-card"
-                if safe_float(
-                    fundamental.get(
-                        "REVENUE_GROWTH_%"
-                    )
-                ) >= 0
-                else "red-card"
             )
         )
 
     with f5:
 
-        color_card(
+        st.metric(
             "PROFIT GROWTH",
             pct(
                 fundamental.get(
                     "PROFIT_GROWTH_%"
                 )
-            ),
-            (
-                "green-card"
-                if safe_float(
-                    fundamental.get(
-                        "PROFIT_GROWTH_%"
-                    )
-                ) >= 0
-                else "red-card"
             )
         )
 
     with f6:
 
-        color_card(
+        st.metric(
             "EPS GROWTH",
             pct(
                 fundamental.get(
                     "EPS_GROWTH_%"
                 )
-            ),
-            (
-                "green-card"
-                if safe_float(
-                    fundamental.get(
-                        "EPS_GROWTH_%"
-                    )
-                ) >= 0
-                else "red-card"
             )
         )
 
 
-    f7,f8,f9 = st.columns(3)
+    f7, f8, f9 = st.columns(3)
 
     with f7:
 
-        color_card(
+        st.metric(
             "ROE",
             pct(
                 fundamental.get(
                     "ROE_%"
                 )
-            ),
-            "green-card"
+            )
         )
 
     with f8:
 
-        color_card(
+        st.metric(
             "ROCE",
             pct(
                 fundamental.get(
                     "ROCE_%"
                 )
-            ),
-            "green-card"
+            )
         )
 
     with f9:
 
-        de = safe_float(
-            fundamental.get(
-                "DEBT_TO_EQUITY"
-            ),
-            np.nan
-        )
-
-        color_card(
+        st.metric(
             "DEBT / EQUITY",
-            number2(de),
-            (
-                "green-card"
-                if de <= 1
-                else "orange-card"
+            num2(
+                fundamental.get(
+                    "DEBT_TO_EQUITY"
+                )
             )
         )
 
 
-    # -----------------------------------------------------
+    # =====================================================
     # VALUATION
-    # -----------------------------------------------------
-
-    st.caption("💰 Valuation")
-
-    q1,q2,q3,q4 = st.columns(4)
-
-    with q1:
-        color_card(
-            "PE",
-            number2(
-                fundamental.get("PE")
-            ),
-            "blue-card"
-        )
-
-    with q2:
-        color_card(
-            "FORWARD PE",
-            number2(
-                fundamental.get("FORWARD_PE")
-            ),
-            "blue-card"
-        )
-
-    with q3:
-        color_card(
-            "PB",
-            number2(
-                fundamental.get("PB")
-            ),
-            "blue-card"
-        )
-
-    with q4:
-        color_card(
-            "VALUATION",
-            display_value(
-                fundamental.get(
-                    "VALUATION_ZONE"
-                )
-            ),
-            "yellow-card"
-        )
-
-
-    # -----------------------------------------------------
-    # RISK
-    # -----------------------------------------------------
+    # =====================================================
 
     st.markdown(
-        '<div class="section-title">🛡️ RISK</div>',
+        '<div class="section-title">'
+        '💰 VALUATION'
+        '</div>',
         unsafe_allow_html=True
     )
 
-    r1,r2,r3 = st.columns(3)
+    q1, q2, q3, q4 = st.columns(4)
+
+    with q1:
+
+        st.metric(
+            "PE",
+            num2(
+                fundamental.get(
+                    "PE"
+                )
+            )
+        )
+
+    with q2:
+
+        st.metric(
+            "FORWARD PE",
+            num2(
+                fundamental.get(
+                    "FORWARD_PE"
+                )
+            )
+        )
+
+    with q3:
+
+        st.metric(
+            "PB",
+            num2(
+                fundamental.get(
+                    "PB"
+                )
+            )
+        )
+
+    with q4:
+
+        valuation = display_value(
+            fundamental.get(
+                "VALUATION_ZONE"
+            )
+        )
+
+        st.metric(
+            "VALUATION",
+            f"{zone_symbol(valuation)} {valuation}"
+        )
+
+
+    # =====================================================
+    # RISK
+    # =====================================================
+
+    st.markdown(
+        '<div class="section-title">'
+        '🛡️ RISK'
+        '</div>',
+        unsafe_allow_html=True
+    )
+
+    r1, r2, r3 = st.columns(3)
 
     with r1:
 
-        color_card(
+        st.metric(
             "RISK SCORE",
-            f"{risk_score:.0f}/100",
-            (
-                "green-card"
-                if risk_score >= 60
-                else
-                "orange-card"
-                if risk_score >= 30
-                else
-                "red-card"
-            )
+            f"{risk_score:.0f}/100"
         )
 
     with r2:
 
-        color_card(
+        risk_level = display_value(
+            result.get(
+                "RISK_LEVEL"
+            )
+        )
+
+        st.metric(
             "RISK LEVEL",
-            display_value(
-                result.get("RISK_LEVEL")
-            ),
-            "orange-card"
+            risk_level
         )
 
     with r3:
 
-        color_card(
+        st.metric(
             "RISK %",
             pct(
-                result.get("RISK_%")
-            ),
-            "red-card"
+                result.get(
+                    "RISK_%"
+                )
+            )
         )
 
 
-    # -----------------------------------------------------
+    # =====================================================
     # STATUS
-    # -----------------------------------------------------
+    # =====================================================
 
     st.caption(
         "📅 Data Date: "
-        + str(
-            display_value(
-                result.get("DATA_DATE")
+        +
+        display_value(
+            result.get(
+                "DATA_DATE"
             )
         )
-        + " | NSE Status: "
-        + str(
-            display_value(
-                result.get("STATUS")
+        +
+        " | NSE Status: "
+        +
+        display_value(
+            result.get(
+                "STATUS"
             )
         )
-        + " | Fundamental: "
-        + str(
-            display_value(
-                fundamental.get("STATUS")
+        +
+        " | Fundamental: "
+        +
+        display_value(
+            fundamental.get(
+                "STATUS"
             )
         )
     )
 
 
-    # -----------------------------------------------------
-    # SHARE
-    # -----------------------------------------------------
+    # =====================================================
+    # SHARE / COPY
+    # =====================================================
 
     share_text = f"""
 📈 R.S MASTER STOCK GUIDE V2
 
 📌 STOCK: {symbol}
-💰 CMP: ₹{cmp:.2f}
+CMP: ₹{cmp:.2f}
 
-🏦 MASTER SCORE: {master_score:.1f}/100
-🎯 DECISION: {decision_text}
+🏦 MASTER SCORE: {master_score}/100
+
+🎯 DECISION:
+{signal_symbol(decision)} {decision_text}
+
+MARKET ZONE:
 {market_zone}
 
-📈 TECHNICAL: {technical_score:.0f}/100
-🏢 FUNDAMENTAL: {fundamental_score:.0f}/100
-🛡️ RISK: {risk_score:.0f}/100
+📈 TECHNICAL:
+{technical_score:.0f}/100
 
-🎯 SWING: ₹{swing_target:.2f}
-🚀 LONG: ₹{long_target:.2f}
-🛑 STOP LOSS: ₹{stop_loss:.2f}
+🏢 FUNDAMENTAL:
+{fundamental_score:.0f}/100
 
-🚪 EXIT MATRA: {exit_signal}
-Reason: {exit_reason}
+🛡️ RISK:
+{risk_score:.0f}/100
 
-📊 RSI: {number2(result.get("RSI_14"))}
-📈 MACD: {number2(result.get("MACD"))}
-📉 HISTOGRAM: {number2(result.get("MACD_HIST"))}
+🎯 SWING TARGET:
+₹{swing_target:.2f}
 
-📊 EMA ALIGNMENT:
-{display_value(result.get("EMA_ALIGNMENT"))}
+🚀 LONG TARGET:
+₹{long_target:.2f}
+
+🛑 STOP LOSS:
+₹{stop_loss:.2f}
+
+🚪 EXIT MATRA:
+{exit_signal}
+
+Reason:
+{exit_reason}
+
+📊 RSI:
+{num2(result.get("RSI_14"))}
+
+📊 MACD:
+{num2(result.get("MACD"))}
+
+📊 MACD HISTOGRAM:
+{num2(result.get("MACD_HIST"))}
+
+📈 EMA ALIGNMENT:
+{alignment_symbol(
+    result.get("EMA_ALIGNMENT")
+)}
 
 🧭 TREND:
-{display_value(result.get("SUPERTREND_STATUS"))}
+{trend_symbol(
+    result.get("SUPERTREND_STATUS")
+)}
 
 🚀 BREAKOUT:
-{display_value(result.get("VOLUME_BREAKOUT"))}
+{breakout_symbol(
+    result.get("VOLUME_BREAKOUT")
+)}
 
 🏢 REVENUE GROWTH:
-{pct(fundamental.get("REVENUE_GROWTH_%"))}
+{pct(
+    fundamental.get("REVENUE_GROWTH_%")
+)}
 
 💰 PROFIT GROWTH:
-{pct(fundamental.get("PROFIT_GROWTH_%"))}
+{pct(
+    fundamental.get("PROFIT_GROWTH_%")
+)}
+
+📈 EPS GROWTH:
+{pct(
+    fundamental.get("EPS_GROWTH_%")
+)}
 
 ROE:
-{pct(fundamental.get("ROE_%"))}
+{pct(
+    fundamental.get("ROE_%")
+)}
 
 ROCE:
-{pct(fundamental.get("ROCE_%"))}
+{pct(
+    fundamental.get("ROCE_%")
+)}
 
 📅 DATA DATE:
-{display_value(result.get("DATA_DATE"))}
+{display_value(
+    result.get("DATA_DATE")
+)}
 """
 
     with st.expander(
@@ -2008,17 +2455,17 @@ ROCE:
         )
 
 
-    # -----------------------------------------------------
+    # =====================================================
     # SCORE STORAGE
-    # -----------------------------------------------------
+    # =====================================================
 
     all_scores.append(
         {
-            "SYMBOL":symbol,
-            "MASTER_SCORE":master_score,
-            "DECISION":decision_text,
-            "EXIT_MATRA":exit_signal,
-            "ZONE":market_zone
+            "SYMBOL": symbol,
+            "MASTER_SCORE": master_score,
+            "DECISION": decision,
+            "EXIT_MATRA": exit_signal,
+            "ZONE": market_zone
         }
     )
 
@@ -2035,7 +2482,9 @@ ROCE:
 # PORTFOLIO SUMMARY
 # =========================================================
 
-st.header("📊 PORTFOLIO SUMMARY")
+st.header(
+    "📊 PORTFOLIO SUMMARY"
+)
 
 
 if all_scores:
@@ -2052,81 +2501,113 @@ if all_scores:
     )
 
     buy = int(
-        scores_df["DECISION"]
-        .str.contains("BUY")
-        .sum()
+        (
+            scores_df["DECISION"]
+            == "BUY"
+        ).sum()
     )
 
     hold = int(
-        scores_df["DECISION"]
-        .str.contains("HOLD")
-        .sum()
+        (
+            scores_df["DECISION"]
+            == "HOLD"
+        ).sum()
     )
 
     wait = int(
-        scores_df["DECISION"]
-        .str.contains("WAIT")
-        .sum()
+        (
+            scores_df["DECISION"]
+            == "WAIT"
+        ).sum()
     )
 
-    reduce_count = int(
-        scores_df["DECISION"]
-        .str.contains("REDUCE")
-        .sum()
+    sell = int(
+        (
+            scores_df["DECISION"]
+            == "SELL"
+        ).sum()
     )
 
     exit_count = int(
-        scores_df["DECISION"]
-        .str.contains("EXIT")
-        .sum()
+        (
+            scores_df["DECISION"]
+            == "EXIT"
+        ).sum()
     )
 
 
-    b1,b2,b3 = st.columns(3)
+    # =====================================================
+    # SUMMARY CARDS
+    # =====================================================
+
+    b1, b2, b3 = st.columns(3)
 
     with b1:
 
-        color_card(
+        st.metric(
             "📊 STOCKS",
-            len(scores_df),
-            "blue-card"
+            len(scores_df)
         )
 
     with b2:
 
-        color_card(
+        st.metric(
             "❤️ PORTFOLIO HEALTH",
-            f"{health}/100",
-            (
-                "green-card"
-                if health >= 60
-                else
-                "orange-card"
-                if health >= 40
-                else
-                "red-card"
-            )
+            f"{health}/100"
         )
 
     with b3:
 
-        color_card(
+        st.metric(
             "🟢 BUY",
-            buy,
-            "green-card"
+            buy
         )
 
 
-    st.caption(
-        f"🔵 HOLD: {hold}  |  "
-        f"🟡 WAIT: {wait}  |  "
-        f"🟠 REDUCE: {reduce_count}  |  "
-        f"🔴 EXIT: {exit_count}"
+    st.markdown(
+        f"""
+        <div class="signal-box signal-reduce">
+
+        🟢 BUY: {buy}
+        &nbsp;&nbsp;|&nbsp;&nbsp;
+        🔵 HOLD: {hold}
+        &nbsp;&nbsp;|&nbsp;&nbsp;
+        🟡 WAIT: {wait}
+        &nbsp;&nbsp;|&nbsp;&nbsp;
+        🟠 REDUCE: {sell}
+        &nbsp;&nbsp;|&nbsp;&nbsp;
+        🔴 EXIT: {exit_count}
+
+        </div>
+        """,
+        unsafe_allow_html=True
     )
 
 
+    # =====================================================
+    # SUMMARY TABLE
+    # =====================================================
+
+    summary_display = scores_df.copy()
+
+    summary_display["SIGNAL"] = (
+        summary_display["DECISION"]
+        .map(signal_symbol)
+    )
+
+    summary_display = summary_display[
+        [
+            "SYMBOL",
+            "MASTER_SCORE",
+            "SIGNAL",
+            "DECISION",
+            "EXIT_MATRA",
+            "ZONE"
+        ]
+    ]
+
     st.dataframe(
-        scores_df,
+        summary_display,
         width="stretch",
         hide_index=True
     )
@@ -2144,16 +2625,7 @@ else:
 
 st.divider()
 
-st.markdown(
-    """
-    <div style="
-        text-align:center;
-        opacity:0.65;
-        font-size:0.70rem;
-        padding:8px;">
-        📈 R.S MASTER STOCK GUIDE V2<br>
-        NSE Stock Decision System
-    </div>
-    """,
-    unsafe_allow_html=True
+st.caption(
+    "📈 R.S MASTER STOCK GUIDE V2 | "
+    "NSE Stock Decision System"
 )
