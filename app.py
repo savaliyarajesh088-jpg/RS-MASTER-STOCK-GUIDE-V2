@@ -202,14 +202,23 @@ def pct(value):
 def value(value):
 
     try:
-
         if value is None or pd.isna(value):
             return "—"
 
-    except Exception:
-        pass
+        return float(value)
 
-    return value
+    except Exception:
+        return "—"
+
+    
+
+        
+            
+
+    
+        
+
+    
 
 
 def clean_symbol(symbol):
