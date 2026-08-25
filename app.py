@@ -158,10 +158,7 @@ def safe_float(value, default=0.0):
 
     try:
 
-        if value is None:
-            return default
-
-        if pd.isna(value):
+        if value is None or pd.isna(value):
             return default
 
         return float(value)
@@ -199,26 +196,42 @@ def pct(value):
         return "—"
 
 
+# =========================================================
+# GENERAL VALUE DISPLAY
+# =========================================================
+
 def value(value):
 
     try:
+
         if value is None or pd.isna(value):
             return "—"
 
-        return float(value)
+    except Exception:
+        pass
+
+    return value
+
+
+# =========================================================
+# NUMBER DISPLAY
+# IMPORTANT:
+# Only numeric indicators use this.
+# Text values remain untouched by value().
+# =========================================================
+
+def number(value, decimals=2):
+
+    try:
+
+        if value is None or pd.isna(value):
+            return "—"
+
+        return f"{float(value):.{decimals}f}"
 
     except Exception:
+
         return "—"
-
-    
-
-        
-            
-
-    
-        
-
-    
 
 
 def clean_symbol(symbol):
@@ -1346,7 +1359,7 @@ for raw_symbol in portfolio["SYMBOL"]:
 
         st.metric(
             "Momentum",
-            money(
+            value(
                 result.get(
                     "MOMENTUM_LEVEL"
                 )
@@ -1498,7 +1511,7 @@ for raw_symbol in portfolio["SYMBOL"]:
 
     tc3.metric(
         "RSI",
-        value(
+        number(
             result.get(
                 "RSI_14"
             )
@@ -1583,7 +1596,7 @@ for raw_symbol in portfolio["SYMBOL"]:
 
     m1.metric(
         "RSI",
-        value(
+        number(
             result.get(
                 "RSI_14"
             )
@@ -1592,7 +1605,7 @@ for raw_symbol in portfolio["SYMBOL"]:
 
     m2.metric(
         "MACD",
-        value(
+        number(
             result.get(
                 "MACD"
             )
@@ -1601,7 +1614,7 @@ for raw_symbol in portfolio["SYMBOL"]:
 
     m3.metric(
         "Histogram",
-        value(
+        number(
             result.get(
                 "MACD_HIST"
             )
@@ -1664,11 +1677,9 @@ for raw_symbol in portfolio["SYMBOL"]:
 
     v2.metric(
         "Volume Ratio",
-        str(
-            value(
-                result.get(
-                    "VOLUME_RATIO"
-                )
+        number(
+            result.get(
+                "VOLUME_RATIO"
             )
         )
         + "x"
@@ -1927,8 +1938,9 @@ RISK: {risk_score:.0f}/100
 🚪 EXIT MATRA: {exit_signal}
 Reason: {exit_reason}
 
-📈 RSI: {value(result.get("RSI_14"))}
-📊 MACD: {value(result.get("MACD"))}
+📈 RSI: {number(result.get("RSI_14"))}
+📊 MACD: {number(result.get("MACD"))}
+📊 Histogram: {number(result.get("MACD_HIST"))}
 🚀 Breakout: {value(result.get("VOLUME_BREAKOUT"))}
 
 🏢 Revenue Growth:
