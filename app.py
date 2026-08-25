@@ -1402,40 +1402,171 @@ for raw_symbol in portfolio["SYMBOL"]:
         cmp * 1.20
     )
 
+    # =====================================================
+# V2 LEGACY EXIT MATRA — REFERENCE ONLY
+# =====================================================
+
+legacy_exit_signal = "HOLD"
+legacy_exit_reason = "Setup active"
+
+
+if cmp > 0:
+
+    if cmp <= stop_loss:
+
+        legacy_exit_signal = "EXIT"
+        legacy_exit_reason = (
+            "Stop-loss breached"
+        )
+
+    elif master_score < 30:
+
+        # IMPORTANT:
+        # Master Score is retained only as
+        # V2 reference evidence.
+        # It is NOT allowed to create
+        # an independent V3 EXIT.
+
+        legacy_exit_signal = "EXIT"
+        legacy_exit_reason = (
+            "V2 legacy Master Score weak"
+        )
+
+    elif (
+        technical_score < 35
+        and
+        fundamental_score < 35
+    ):
+
+        legacy_exit_signal = "REDUCE"
+        legacy_exit_reason = (
+            "Technical + fundamental weakness"
+        )
+
+    elif cmp >= long_target:
+
+        legacy_exit_signal = "BOOK"
+        legacy_exit_reason = (
+            "Long-term target reached"
+        )
+
+
+# =====================================================
+# V3 E.M.S. — INDEPENDENT EXIT LAYER
+# =====================================================
+
+ems_input = {
+
+    # Master Score = CONTEXT ONLY
+    "master_score": master_score,
+
+    # Existing V2 evidence
+    "trend_breakdown": (
+        technical_score < 35
+    ),
+
+    "momentum_breakdown": (
+        str(
+            result.get(
+                "MOMENTUM_LEVEL",
+                ""
+            )
+        ).upper()
+        in {
+            "BEARISH",
+            "WEAK",
+            "NEGATIVE"
+        }
+    ),
+
+    # Not available yet from this section
+    "support_breakdown": None,
+
+    # Not available yet from this section
+    "volume_confirmation": None,
+
+    # Not available yet
+    "relative_strength_breakdown": None,
+
+    # Risk deterioration requires
+    # actual V2 risk logic mapping.
+    "risk_deterioration": None,
+
+    # We do NOT guess Above Exit Price.
+    "above_exit_price": None,
+
+    # ATH Profit requires actual ATH/profit data.
+    "ath_profit": None,
+
+    # Outperformance requires benchmark comparison.
+    "outperformance": None,
+
+    # Legacy V2 result is reference only.
+    "reference_match": None,
+}
+
+
+ems_result = evaluate_ems(
+    ems_input
+)
+
+ems_ui = ems_display(
+    ems_result
+)
+
+
+# =====================================================
+# V3 FINAL EXIT STATUS
+# =====================================================
+
+ems_status = ems_result.get(
+    "status",
+    "DATA LIMITED"
+)
+
+ems_reason = ems_result.get(
+    "reason",
+    "EMS data unavailable"
+)
+
+
+# V3 decision source
+# EMS only becomes EXIT when its
+# independent evidence confirms it.
+
+if ems_status == "EXIT":
+
+    exit_signal = "EXIT"
+    exit_reason = ems_reason
+
+elif ems_status == "REDUCE":
+
+    exit_signal = "REDUCE"
+    exit_reason = ems_reason
+
+elif ems_status == "WATCH":
 
     exit_signal = "HOLD"
-    exit_reason = "Setup active"
+    exit_reason = (
+        "EMS WATCH — confirmation required"
+    )
 
+elif ems_status == "SAFE":
 
-    if cmp > 0:
+    exit_signal = "HOLD"
+    exit_reason = (
+        "EMS SAFE — no confirmed exit"
+    )
 
-        if cmp <= stop_loss:
+else:
 
-            exit_signal = "EXIT"
-            exit_reason = "Stop-loss breached"
+    exit_signal = "HOLD"
+    exit_reason = (
+        "EMS DATA LIMITED — "
+        "no exit generated"
+    )
 
-        elif master_score < 30:
-
-            exit_signal = "EXIT"
-            exit_reason = "Master score weak"
-
-        elif (
-            technical_score < 35
-            and
-            fundamental_score < 35
-        ):
-
-            exit_signal = "REDUCE"
-            exit_reason = (
-                "Technical + fundamental weakness"
-            )
-
-        elif cmp >= long_target:
-
-            exit_signal = "BOOK"
-            exit_reason = (
-                "Long-term target reached"
-            )
+    
 
 
     # =====================================================
