@@ -1480,7 +1480,13 @@ ems_input = {
     ),
 
     # Not available yet from this section
-    "support_breakdown": None,
+    "support_breakdown": (
+    cmp > 0
+    and high_52 > 0
+    and (
+        cmp <= high_52 * 0.70
+    )
+),
 
     # Not available yet from this section
     "volume_confirmation": (
