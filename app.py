@@ -1547,6 +1547,72 @@ for raw_symbol in portfolio["SYMBOL"]:
         unsafe_allow_html=True
     )
 
+    # =====================================================
+# E.M.S. — EXIT MANAGEMENT SYSTEM
+# =====================================================
+
+ems_input = {
+    "master_score": master_score,
+
+    # V2 analysisમાંથી available values હોય ત્યારે જ આપવાના.
+    # Missing values માટે EMS DATA LIMITED આપશે.
+    "trend_breakdown": None,
+    "momentum_breakdown": None,
+    "support_breakdown": None,
+    "volume_confirmation": None,
+    "relative_strength_breakdown": None,
+    "risk_deterioration": None,
+
+    "above_exit_price": None,
+    "ath_profit": None,
+    "outperformance": None,
+
+    # Reference calibration
+    "reference_match": None,
+}
+
+ems_result = evaluate_ems(ems_input)
+
+ems_ui = ems_display(ems_result)
+
+st.markdown(
+    f"""
+    <div class="score-card"
+         style="
+         border:1px solid {ems_ui['color']};
+         margin-top:10px;
+         ">
+
+        <div class="score-title">
+            🧠 E.M.S.
+        </div>
+
+        <div
+            style="
+            color:{ems_ui['color']};
+            font-size:1.25rem;
+            font-weight:950;
+            margin-top:6px;
+            "
+        >
+            {ems_ui['label']}
+        </div>
+
+        <div
+            style="
+            font-size:0.70rem;
+            opacity:0.65;
+            margin-top:6px;
+            "
+        >
+            Independent Exit Management Layer
+        </div>
+
+    </div>
+    """,
+    unsafe_allow_html=True
+)
+
 
     # =====================================================
     # DECISION
