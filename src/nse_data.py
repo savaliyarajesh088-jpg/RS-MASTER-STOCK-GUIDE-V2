@@ -1,26 +1,46 @@
 """
-R.S MASTER STOCK GUIDE V2
-NSE Market Data + Core Technical Engine
+R.S MASTER STOCK GUIDE V3
+NSE MARKET DATA ENGINE
+============================================================
 
-Responsibilities:
-- NSE/Yahoo price data
-- CMP / change
-- OHLCV
-- 52-week high / low
-- EMA 10/20/50/100/200
-- RSI 14
-- MACD 12/26/9
-- Supertrend 10/3
-- Volume ratio
-- Data freshness / quality
-- Basic ATR
+CORE RESPONSIBILITIES
+------------------------------------------------------------
+• NSE / Yahoo Finance market data
+• CMP / Previous Close / Change %
+• OHLCV
+• 52W High / Low
+• EMA 10 / 20 / 50 / 100 / 200
+• RSI 14 — Wilder
+• MACD 12 / 26 / 9
+• ATR 14
+• Supertrend 10 / 3
+• Volume Average / Volume Ratio
+• Volume Breakout
+• EMA Alignment
+• Technical Score
+• Technical Zone
+• Data Quality
+• Data Freshness
+• Signal Safety
+• EMS-compatible independent evidence fields
+
+IMPORTANT
+------------------------------------------------------------
+• NSE ONLY
+• No fabricated market data
+• Missing data remains missing
+• No Master Score calculation here
+• No EXIT decision here
+• EMS remains independent
+============================================================
 """
 
 from __future__ import annotations
 
 from datetime import datetime, timezone
-from typing import Any, Dict
+from typing import Any, Dict, Optional, Tuple
 
+import math
 import numpy as np
 import pandas as pd
 import yfinance as yf
@@ -33,7 +53,13 @@ import yfinance as yf
 DATA_PERIOD = "2y"
 DATA_INTERVAL = "1d"
 
-EMA_PERIODS = [10, 20, 50, 100, 200]
+EMA_PERIODS = (
+    10,
+    20,
+    50,
+    100,
+    200,
+)
 
 RSI_PERIOD = 14
 
@@ -41,89 +67,176 @@ MACD_FAST = 12
 MACD_SLOW = 26
 MACD_SIGNAL = 9
 
+ATR_PERIOD = 14
+
 SUPERTREND_PERIOD = 10
 SUPERTREND_MULTIPLIER = 3.0
 
-ATR_PERIOD = 14
-
 VOLUME_AVG_PERIOD = 20
+
+VOLUME_BREAKOUT_THRESHOLD = 2.0
 
 FRESHNESS_LIMIT_DAYS = 5
 
+MIN_DATA_QUALITY = 90.0
+
 
 # =========================================================
-# BASIC HELPERS
+# SAFE HELPERS
 # =========================================================
 
-def _safe_float(value: Any, default: float = 0.0) -> float:
-    """Safely convert a value to float."""
+def _safe_float(
+    value: Any,
+    default: float = np.nan
+) -> float:
 
     try:
+
         if value is None:
             return default
 
-        if pd.isna(value):
+        if isinstance(value, str):
+            value = value.replace(",", "").strip()
+
+        value = float(value)
+
+        if not math.isfinite(value):
             return default
 
-        return float(value)
+        return value
 
     except Exception:
+
         return default
 
 
-def _clean_symbol(symbol: str) -> str:
-    """Convert NSE symbol to Yahoo Finance NSE ticker."""
+def _safe_bool(
+    value: Any
+) -> Optional[bool]:
+
+    if value is None:
+        return None
+
+    if isinstance(value, bool):
+        return value
+
+    if isinstance(value, (int, float)):
+
+        if value == 1:
+            return True
+
+        if value == 0:
+            return False
+
+    if isinstance(value, str):
+
+        value = value.strip().lower()
+
+        if value in {
+            "true",
+            "yes",
+            "y",
+            "1",
+            "bullish",
+            "confirmed",
+            "breakout",
+            "broken",
+        }:
+            return True
+
+        if value in {
+            "false",
+            "no",
+            "n",
+            "0",
+            "bearish",
+            "safe",
+            "positive",
+        }:
+            return False
+
+    return None
+
+
+def _clean_symbol(
+    symbol: str
+) -> str:
 
     symbol = str(symbol).strip().upper()
 
     if symbol.endswith(".NS"):
-        return symbol
+        return symbol[:-3]
 
-    return f"{symbol}.NS"
+    return symbol
 
 
-def _flatten_yfinance_columns(df: pd.DataFrame) -> pd.DataFrame:
-    """Protect against yfinance MultiIndex columns."""
+def _yahoo_symbol(
+    symbol: str
+) -> str:
 
-    if not isinstance(df.columns, pd.MultiIndex):
+    clean = _clean_symbol(symbol)
+
+    return f"{clean}.NS"
+
+
+# =========================================================
+# YFINANCE COLUMN NORMALISATION
+# =========================================================
+
+def _flatten_yfinance_columns(
+    df: pd.DataFrame
+) -> pd.DataFrame:
+
+    if not isinstance(
+        df.columns,
+        pd.MultiIndex
+    ):
         return df
 
-    flattened = []
+    output = df.copy()
 
-    for column in df.columns:
+    columns = []
+
+    required = {
+        "Open",
+        "High",
+        "Low",
+        "Close",
+        "Adj Close",
+        "Volume",
+    }
+
+    for column in output.columns:
+
+        selected = None
 
         if isinstance(column, tuple):
 
-            value = None
-
             for item in column:
 
-                if item in {
-                    "Open",
-                    "High",
-                    "Low",
-                    "Close",
-                    "Adj Close",
-                    "Volume",
-                }:
-                    value = item
+                if item in required:
+                    selected = item
                     break
 
-            flattened.append(
-                value if value else str(column[0])
-            )
+        if selected is None:
 
-        else:
-            flattened.append(str(column))
+            selected = str(column[0])
 
-    df = df.copy()
-    df.columns = flattened
+        columns.append(selected)
 
-    return df
+    output.columns = columns
+
+    return output
 
 
-def _normalise_ohlcv(df: pd.DataFrame) -> pd.DataFrame:
-    """Keep only required OHLCV columns and clean numeric data."""
+def _normalise_ohlcv(
+    df: pd.DataFrame
+) -> pd.DataFrame:
+
+    if df is None or df.empty:
+        raise ValueError(
+            "Empty market data"
+        )
 
     df = _flatten_yfinance_columns(df)
 
@@ -136,12 +249,13 @@ def _normalise_ohlcv(df: pd.DataFrame) -> pd.DataFrame:
     ]
 
     missing = [
-        column
-        for column in required
-        if column not in df.columns
+        col
+        for col in required
+        if col not in df.columns
     ]
 
     if missing:
+
         raise ValueError(
             "Missing market columns: "
             + ", ".join(missing)
@@ -166,24 +280,29 @@ def _normalise_ohlcv(df: pd.DataFrame) -> pd.DataFrame:
             "Open",
             "High",
             "Low",
-            "Close"
+            "Close",
         ]
     )
 
     df = df.sort_index()
 
+    if df.empty:
+
+        raise ValueError(
+            "No valid OHLC data"
+        )
+
     return df
 
 
 # =========================================================
-# RSI
+# RSI — WILDER
 # =========================================================
 
 def calculate_rsi(
     close: pd.Series,
     period: int = RSI_PERIOD
 ) -> pd.Series:
-    """Calculate RSI using Wilder-style smoothing."""
 
     delta = close.diff()
 
@@ -197,28 +316,47 @@ def calculate_rsi(
 
     avg_gain = gain.ewm(
         alpha=1 / period,
+        adjust=False,
         min_periods=period,
-        adjust=False
     ).mean()
 
     avg_loss = loss.ewm(
         alpha=1 / period,
+        adjust=False,
         min_periods=period,
-        adjust=False
     ).mean()
 
-    rs = avg_gain / avg_loss.replace(
-        0,
-        np.nan
+    rs = (
+        avg_gain
+        /
+        avg_loss.replace(
+            0,
+            np.nan
+        )
     )
 
-    rsi = 100 - (
-        100 / (1 + rs)
+    rsi = (
+        100
+        -
+        (
+            100
+            /
+            (1 + rs)
+        )
     )
 
-    rsi = rsi.replace(
-        [np.inf, -np.inf],
-        np.nan
+    # Edge case: zero loss = RSI 100
+    rsi = rsi.mask(
+        avg_loss == 0,
+        100.0
+    )
+
+    # Edge case: zero gain and zero loss
+    rsi = rsi.mask(
+        (avg_gain == 0)
+        &
+        (avg_loss == 0),
+        50.0
     )
 
     return rsi
@@ -232,49 +370,58 @@ def calculate_macd(
     close: pd.Series,
     fast: int = MACD_FAST,
     slow: int = MACD_SLOW,
-    signal: int = MACD_SIGNAL
-):
-    """Calculate MACD line, signal line and histogram."""
+    signal: int = MACD_SIGNAL,
+) -> Tuple[
+    pd.Series,
+    pd.Series,
+    pd.Series,
+]:
 
     ema_fast = close.ewm(
         span=fast,
-        adjust=False
+        adjust=False,
+        min_periods=fast,
     ).mean()
 
     ema_slow = close.ewm(
         span=slow,
-        adjust=False
+        adjust=False,
+        min_periods=slow,
     ).mean()
 
     macd_line = (
-        ema_fast - ema_slow
+        ema_fast
+        -
+        ema_slow
     )
 
     signal_line = macd_line.ewm(
         span=signal,
-        adjust=False
+        adjust=False,
+        min_periods=signal,
     ).mean()
 
     histogram = (
-        macd_line - signal_line
+        macd_line
+        -
+        signal_line
     )
 
     return (
         macd_line,
         signal_line,
-        histogram
+        histogram,
     )
 
 
 # =========================================================
-# TRUE RANGE / ATR
+# ATR
 # =========================================================
 
 def calculate_atr(
     df: pd.DataFrame,
     period: int = ATR_PERIOD
 ) -> pd.Series:
-    """Calculate Average True Range."""
 
     high = df["High"]
 
@@ -284,31 +431,19 @@ def calculate_atr(
 
     previous_close = close.shift(1)
 
-    tr1 = (
-        high - low
-    )
-
-    tr2 = (
-        high - previous_close
-    ).abs()
-
-    tr3 = (
-        low - previous_close
-    ).abs()
-
-    true_range = pd.concat(
+    tr = pd.concat(
         [
-            tr1,
-            tr2,
-            tr3
+            high - low,
+            (high - previous_close).abs(),
+            (low - previous_close).abs(),
         ],
-        axis=1
+        axis=1,
     ).max(axis=1)
 
-    atr = true_range.ewm(
+    atr = tr.ewm(
         alpha=1 / period,
+        adjust=False,
         min_periods=period,
-        adjust=False
     ).mean()
 
     return atr
@@ -321,23 +456,21 @@ def calculate_atr(
 def calculate_supertrend(
     df: pd.DataFrame,
     period: int = SUPERTREND_PERIOD,
-    multiplier: float = SUPERTREND_MULTIPLIER
-):
-    """
-    Calculate Supertrend.
-
-    Returns:
-        supertrend series
-        direction series
-    """
+    multiplier: float = SUPERTREND_MULTIPLIER,
+) -> Tuple[
+    pd.Series,
+    pd.Series,
+]:
 
     high = df["High"]
+
     low = df["Low"]
+
     close = df["Close"]
 
     atr = calculate_atr(
         df,
-        period
+        period,
     )
 
     hl2 = (
@@ -345,74 +478,78 @@ def calculate_supertrend(
     ) / 2
 
     basic_upper = (
-        hl2 + multiplier * atr
+        hl2
+        +
+        multiplier * atr
     )
 
     basic_lower = (
-        hl2 - multiplier * atr
+        hl2
+        -
+        multiplier * atr
     )
 
     final_upper = basic_upper.copy()
+
     final_lower = basic_lower.copy()
 
-    direction = pd.Series(
+    supertrend = pd.Series(
+        np.nan,
         index=df.index,
-        dtype="object"
+        dtype=float,
     )
 
-    supertrend = pd.Series(
+    direction = pd.Series(
+        "NO_DATA",
         index=df.index,
-        dtype="float64"
+        dtype=object,
     )
 
     if len(df) == 0:
-        return supertrend, direction
+        return (
+            supertrend,
+            direction,
+        )
 
-    direction.iloc[0] = "BULLISH"
+    for i in range(len(df)):
 
-    supertrend.iloc[0] = np.nan
+        if i == 0:
 
-    for i in range(1, len(df)):
-
-        if (
-            pd.isna(
-                basic_upper.iloc[i]
+            direction.iloc[i] = (
+                "NO_DATA"
             )
-            or
-            pd.isna(
-                basic_lower.iloc[i]
-            )
+
+            continue
+
+        if pd.isna(
+            atr.iloc[i]
         ):
+
+            direction.iloc[i] = (
+                "NO_DATA"
+            )
+
+            continue
+
+        previous_upper = (
+            final_upper.iloc[i - 1]
+        )
+
+        previous_lower = (
+            final_lower.iloc[i - 1]
+        )
+
+        previous_close = (
+            close.iloc[i - 1]
+        )
+
+        if pd.isna(previous_upper):
 
             final_upper.iloc[i] = (
                 basic_upper.iloc[i]
             )
 
-            final_lower.iloc[i] = (
-                basic_lower.iloc[i]
-            )
-
-            direction.iloc[i] = (
-                direction.iloc[i - 1]
-            )
-
-            continue
-
-        previous_close = close.iloc[
-            i - 1
-        ]
-
-        previous_upper = final_upper.iloc[
-            i - 1
-        ]
-
-        previous_lower = final_lower.iloc[
-            i - 1
-        ]
-
-        if (
-            pd.isna(previous_upper)
-            or
+        elif (
             basic_upper.iloc[i]
             < previous_upper
             or
@@ -430,9 +567,13 @@ def calculate_supertrend(
                 previous_upper
             )
 
-        if (
-            pd.isna(previous_lower)
-            or
+        if pd.isna(previous_lower):
+
+            final_lower.iloc[i] = (
+                basic_lower.iloc[i]
+            )
+
+        elif (
             basic_lower.iloc[i]
             > previous_lower
             or
@@ -456,10 +597,7 @@ def calculate_supertrend(
 
         if previous_direction == "BEARISH":
 
-            if (
-                close.iloc[i]
-                > final_upper.iloc[i]
-            ):
+            if close.iloc[i] > final_upper.iloc[i]:
 
                 direction.iloc[i] = (
                     "BULLISH"
@@ -473,10 +611,7 @@ def calculate_supertrend(
 
         else:
 
-            if (
-                close.iloc[i]
-                < final_lower.iloc[i]
-            ):
+            if close.iloc[i] < final_lower.iloc[i]:
 
                 direction.iloc[i] = (
                     "BEARISH"
@@ -494,7 +629,7 @@ def calculate_supertrend(
                 final_lower.iloc[i]
             )
 
-        else:
+        elif direction.iloc[i] == "BEARISH":
 
             supertrend.iloc[i] = (
                 final_upper.iloc[i]
@@ -502,7 +637,7 @@ def calculate_supertrend(
 
     return (
         supertrend,
-        direction
+        direction,
     )
 
 
@@ -510,64 +645,57 @@ def calculate_supertrend(
 # EMA ALIGNMENT
 # =========================================================
 
-def get_ema_alignment(row: pd.Series) -> str:
-    """Classify EMA structure."""
+def get_ema_alignment(
+    row: pd.Series
+) -> str:
 
-    ema10 = _safe_float(
-        row.get("EMA_10"),
-        np.nan
-    )
+    values = []
 
-    ema20 = _safe_float(
-        row.get("EMA_20"),
-        np.nan
-    )
+    for period in EMA_PERIODS:
 
-    ema50 = _safe_float(
-        row.get("EMA_50"),
-        np.nan
-    )
+        value = _safe_float(
+            row.get(
+                f"EMA_{period}"
+            )
+        )
 
-    ema100 = _safe_float(
-        row.get("EMA_100"),
-        np.nan
-    )
-
-    ema200 = _safe_float(
-        row.get("EMA_200"),
-        np.nan
-    )
-
-    values = [
-        ema10,
-        ema20,
-        ema50,
-        ema100,
-        ema200
-    ]
+        values.append(value)
 
     if any(
         pd.isna(value)
         for value in values
     ):
+
         return "INSUFFICIENT_DATA"
 
+    e10, e20, e50, e100, e200 = values
+
     if (
-        ema10
-        > ema20
-        > ema50
-        > ema100
-        > ema200
+        e10
+        >
+        e20
+        >
+        e50
+        >
+        e100
+        >
+        e200
     ):
+
         return "BULLISH"
 
     if (
-        ema10
-        < ema20
-        < ema50
-        < ema100
-        < ema200
+        e10
+        <
+        e20
+        <
+        e50
+        <
+        e100
+        <
+        e200
     ):
+
         return "BEARISH"
 
     return "MIXED"
@@ -609,7 +737,7 @@ def get_rsi_state(
 def get_macd_state(
     macd: float,
     signal: float,
-    histogram: float
+    histogram: float,
 ) -> str:
 
     if any(
@@ -617,28 +745,31 @@ def get_macd_state(
         for value in [
             macd,
             signal,
-            histogram
+            histogram,
         ]
     ):
+
         return "NO_DATA"
 
     if (
         macd > signal
         and histogram > 0
     ):
+
         return "BULLISH"
 
     if (
         macd < signal
         and histogram < 0
     ):
+
         return "BEARISH"
 
     return "MIXED"
 
 
 # =========================================================
-# VOLUME STATE
+# VOLUME BREAKOUT
 # =========================================================
 
 def get_volume_breakout(
@@ -670,7 +801,10 @@ def calculate_technical_score(
 
     score = 50.0
 
+    # -----------------------------------------------------
     # EMA
+    # -----------------------------------------------------
+
     alignment = row.get(
         "EMA_ALIGNMENT"
     )
@@ -681,10 +815,12 @@ def calculate_technical_score(
     elif alignment == "BEARISH":
         score -= 15
 
+    # -----------------------------------------------------
     # RSI
+    # -----------------------------------------------------
+
     rsi = _safe_float(
-        row.get("RSI_14"),
-        np.nan
+        row.get("RSI_14")
     )
 
     if not pd.isna(rsi):
@@ -704,7 +840,10 @@ def calculate_technical_score(
         elif rsi < 30:
             score += 2
 
+    # -----------------------------------------------------
     # MACD
+    # -----------------------------------------------------
+
     macd_state = row.get(
         "MACD_STATE"
     )
@@ -715,21 +854,26 @@ def calculate_technical_score(
     elif macd_state == "BEARISH":
         score -= 10
 
-    # Supertrend
-    supertrend_status = row.get(
+    # -----------------------------------------------------
+    # SUPERTREND
+    # -----------------------------------------------------
+
+    trend = row.get(
         "SUPERTREND_STATUS"
     )
 
-    if supertrend_status == "BULLISH":
+    if trend == "BULLISH":
         score += 10
 
-    elif supertrend_status == "BEARISH":
+    elif trend == "BEARISH":
         score -= 10
 
-    # Volume
+    # -----------------------------------------------------
+    # VOLUME
+    # -----------------------------------------------------
+
     volume_ratio = _safe_float(
-        row.get("VOLUME_RATIO"),
-        np.nan
+        row.get("VOLUME_RATIO")
     )
 
     if not pd.isna(volume_ratio):
@@ -742,11 +886,11 @@ def calculate_technical_score(
 
     return float(
         max(
-            0,
+            0.0,
             min(
-                100,
-                round(score, 1)
-            )
+                100.0,
+                round(score, 1),
+            ),
         )
     )
 
@@ -758,6 +902,9 @@ def calculate_technical_score(
 def get_technical_zone(
     score: float
 ) -> str:
+
+    if pd.isna(score):
+        return "NO_DATA"
 
     if score >= 75:
         return "STRONG"
@@ -782,42 +929,53 @@ def calculate_data_quality(
     df: pd.DataFrame
 ) -> float:
 
-    if df.empty:
+    if df is None or df.empty:
         return 0.0
-
-    checks = []
 
     required = [
         "Open",
         "High",
         "Low",
         "Close",
-        "Volume"
+        "Volume",
     ]
+
+    checks = []
 
     for column in required:
 
-        checks.append(
-            float(
-                df[column].notna().mean()
+        if column not in df.columns:
+
+            checks.append(0.0)
+
+        else:
+
+            checks.append(
+                float(
+                    df[column]
+                    .notna()
+                    .mean()
+                )
             )
-        )
 
     return round(
         float(
             np.mean(checks)
-        ) * 100,
-        2
+        ) * 100.0,
+        2,
     )
 
 
 # =========================================================
-# DATA FRESHNESS
+# FRESHNESS
 # =========================================================
 
 def get_freshness_status(
-    last_date
-):
+    last_date: Any
+) -> Tuple[
+    Optional[int],
+    str,
+]:
 
     try:
 
@@ -830,51 +988,81 @@ def get_freshness_status(
                 last_date.to_pydatetime()
             )
 
+        if not isinstance(
+            last_date,
+            datetime
+        ):
+
+            return (
+                None,
+                "UNKNOWN",
+            )
+
         if last_date.tzinfo is None:
 
             last_date = last_date.replace(
                 tzinfo=timezone.utc
             )
 
+        else:
+
+            last_date = (
+                last_date.astimezone(
+                    timezone.utc
+                )
+            )
+
         now = datetime.now(
             timezone.utc
         )
 
-        age_days = (
+        age_seconds = (
             now - last_date
-        ).days
+        ).total_seconds()
+
+        age_days = max(
+            0,
+            int(
+                age_seconds
+                /
+                86400
+            )
+        )
 
         if age_days <= 1:
+
             status = "FRESH"
 
         elif age_days <= FRESHNESS_LIMIT_DAYS:
+
             status = "RECENT"
 
         else:
+
             status = "STALE"
 
         return (
             age_days,
-            status
+            status,
         )
 
     except Exception:
 
         return (
             None,
-            "UNKNOWN"
+            "UNKNOWN",
         )
 
 
 # =========================================================
-# DOWNLOAD MARKET DATA
+# DOWNLOAD
 # =========================================================
 
 def download_market_data(
     symbol: str
 ) -> pd.DataFrame:
 
-    ticker = _clean_symbol(
+    ticker = _yahoo_symbol(
         symbol
     )
 
@@ -884,7 +1072,7 @@ def download_market_data(
         interval=DATA_INTERVAL,
         auto_adjust=False,
         progress=False,
-        threads=False
+        threads=False,
     )
 
     if data is None or data.empty:
@@ -899,25 +1087,171 @@ def download_market_data(
 
 
 # =========================================================
+# EMS INDEPENDENT EVIDENCE
+# =========================================================
+
+def build_ems_evidence(
+    current: pd.Series
+) -> Dict[str, Any]:
+
+    ema_alignment = current.get(
+        "EMA_ALIGNMENT"
+    )
+
+    macd_state = current.get(
+        "MACD_STATE"
+    )
+
+    supertrend_status = current.get(
+        "SUPERTREND_STATUS"
+    )
+
+    rsi = _safe_float(
+        current.get("RSI_14")
+    )
+
+    cmp = _safe_float(
+        current.get("CMP")
+    )
+
+    ema20 = _safe_float(
+        current.get("EMA_20")
+    )
+
+    ema50 = _safe_float(
+        current.get("EMA_50")
+    )
+
+    volume_ratio = _safe_float(
+        current.get("VOLUME_RATIO")
+    )
+
+    # -----------------------------------------------------
+    # Structural deterioration
+    # -----------------------------------------------------
+
+    trend_breakdown = None
+
+    if supertrend_status in {
+        "BULLISH",
+        "BEARISH",
+    }:
+
+        trend_breakdown = (
+            supertrend_status
+            == "BEARISH"
+        )
+
+    momentum_breakdown = None
+
+    if macd_state in {
+        "BULLISH",
+        "BEARISH",
+    }:
+
+        momentum_breakdown = (
+            macd_state
+            == "BEARISH"
+        )
+
+    support_breakdown = None
+
+    if (
+        not pd.isna(cmp)
+        and not pd.isna(ema20)
+    ):
+
+        support_breakdown = (
+            cmp < ema20
+        )
+
+    relative_strength_breakdown = None
+
+    if ema_alignment in {
+        "BULLISH",
+        "BEARISH",
+        "MIXED",
+    }:
+
+        relative_strength_breakdown = (
+            ema_alignment == "BEARISH"
+        )
+
+    risk_deterioration = None
+
+    if (
+        not pd.isna(cmp)
+        and not pd.isna(ema50)
+    ):
+
+        risk_deterioration = (
+            cmp < ema50
+        )
+
+    # -----------------------------------------------------
+    # Confirmation/context
+    # -----------------------------------------------------
+
+    volume_confirmation = None
+
+    if not pd.isna(volume_ratio):
+
+        volume_confirmation = (
+            volume_ratio >=
+            VOLUME_BREAKOUT_THRESHOLD
+        )
+
+    above_exit_price = None
+
+    ath_profit = None
+
+    outperformance = None
+
+    return {
+
+        "trend_breakdown":
+            trend_breakdown,
+
+        "momentum_breakdown":
+            momentum_breakdown,
+
+        "support_breakdown":
+            support_breakdown,
+
+        "volume_confirmation":
+            volume_confirmation,
+
+        "relative_strength_breakdown":
+            relative_strength_breakdown,
+
+        "risk_deterioration":
+            risk_deterioration,
+
+        "above_exit_price":
+            above_exit_price,
+
+        "ath_profit":
+            ath_profit,
+
+        "outperformance":
+            outperformance,
+
+    }
+
+
+# =========================================================
 # MAIN NSE ENGINE
 # =========================================================
 
 def fetch_nse_data(
     symbol: str
 ) -> Dict[str, Any]:
-    """
-    Main NSE data engine.
 
-    Returns a dictionary consumed by app.py.
-    """
-
-    clean_symbol = (
-        str(symbol)
-        .strip()
-        .upper()
+    clean_symbol = _clean_symbol(
+        symbol
     )
 
-    ticker = _clean_symbol(
+    ticker = _yahoo_symbol(
         clean_symbol
     )
 
@@ -929,16 +1263,14 @@ def fetch_nse_data(
 
         if df.empty:
 
-            return {
-                "SYMBOL": clean_symbol,
-                "STATUS": "NO_DATA",
-                "ERROR": "Empty market data"
-            }
+            raise ValueError(
+                "Empty market dataframe"
+            )
 
         close = df["Close"]
 
         # -------------------------------------------------
-        # CHANGE
+        # PRICE
         # -------------------------------------------------
 
         cmp = _safe_float(
@@ -958,9 +1290,17 @@ def fetch_nse_data(
         )
 
         change_pct = (
-            (change / previous_close) * 100
-            if previous_close != 0
-            else 0
+            (
+                change
+                /
+                previous_close
+            )
+            * 100.0
+            if (
+                not pd.isna(previous_close)
+                and previous_close != 0
+            )
+            else np.nan
         )
 
         # -------------------------------------------------
@@ -973,7 +1313,8 @@ def fetch_nse_data(
                 f"EMA_{period}"
             ] = close.ewm(
                 span=period,
-                adjust=False
+                adjust=False,
+                min_periods=period,
             ).mean()
 
         # -------------------------------------------------
@@ -982,7 +1323,7 @@ def fetch_nse_data(
 
         df["RSI_14"] = calculate_rsi(
             close,
-            RSI_PERIOD
+            RSI_PERIOD,
         )
 
         # -------------------------------------------------
@@ -992,7 +1333,7 @@ def fetch_nse_data(
         (
             df["MACD"],
             df["MACD_SIGNAL"],
-            df["MACD_HIST"]
+            df["MACD_HIST"],
         ) = calculate_macd(
             close
         )
@@ -1003,7 +1344,7 @@ def fetch_nse_data(
 
         df["ATR_14"] = calculate_atr(
             df,
-            ATR_PERIOD
+            ATR_PERIOD,
         )
 
         # -------------------------------------------------
@@ -1012,11 +1353,11 @@ def fetch_nse_data(
 
         (
             df["SUPERTREND"],
-            df["SUPERTREND_STATUS"]
+            df["SUPERTREND_STATUS"],
         ) = calculate_supertrend(
             df,
             SUPERTREND_PERIOD,
-            SUPERTREND_MULTIPLIER
+            SUPERTREND_MULTIPLIER,
         )
 
         # -------------------------------------------------
@@ -1026,7 +1367,8 @@ def fetch_nse_data(
         df["AVG_VOLUME_20"] = (
             df["Volume"]
             .rolling(
-                VOLUME_AVG_PERIOD
+                VOLUME_AVG_PERIOD,
+                min_periods=VOLUME_AVG_PERIOD,
             )
             .mean()
         )
@@ -1050,6 +1392,8 @@ def fetch_nse_data(
 
         current = df.iloc[-1].copy()
 
+        current["CMP"] = cmp
+
         # -------------------------------------------------
         # EMA ALIGNMENT
         # -------------------------------------------------
@@ -1066,8 +1410,10 @@ def fetch_nse_data(
 
         current["RSI_STATE"] = (
             get_rsi_state(
-                current.get(
-                    "RSI_14"
+                _safe_float(
+                    current.get(
+                        "RSI_14"
+                    )
                 )
             )
         )
@@ -1078,9 +1424,21 @@ def fetch_nse_data(
 
         current["MACD_STATE"] = (
             get_macd_state(
-                current.get("MACD"),
-                current.get("MACD_SIGNAL"),
-                current.get("MACD_HIST")
+                _safe_float(
+                    current.get(
+                        "MACD"
+                    )
+                ),
+                _safe_float(
+                    current.get(
+                        "MACD_SIGNAL"
+                    )
+                ),
+                _safe_float(
+                    current.get(
+                        "MACD_HIST"
+                    )
+                ),
             )
         )
 
@@ -1116,18 +1474,22 @@ def fetch_nse_data(
             recent_52w["Low"].min()
         )
 
-        # -------------------------------------------------
-        # ATR
-        # -------------------------------------------------
-
-        atr = _safe_float(
-            current.get(
-                "ATR_14"
+        distance_from_high = (
+            (
+                high_52w - cmp
             )
+            /
+            high_52w
+            * 100.0
+            if (
+                not pd.isna(high_52w)
+                and high_52w > 0
+            )
+            else np.nan
         )
 
         # -------------------------------------------------
-        # DATA FRESHNESS
+        # FRESHNESS
         # -------------------------------------------------
 
         last_date = df.index[-1]
@@ -1148,277 +1510,452 @@ def fetch_nse_data(
             )
         )
 
-        # -------------------------------------------------
-        # SIGNAL SAFETY
-        # -------------------------------------------------
-
         signal_allowed = (
             freshness
             in {
                 "FRESH",
-                "RECENT"
+                "RECENT",
             }
-            and data_quality >= 90
+            and
+            data_quality
+            >= MIN_DATA_QUALITY
         )
 
         # -------------------------------------------------
-        # RETURN
+        # EMS EVIDENCE
         # -------------------------------------------------
 
-        return {
+        ems_evidence = (
+            build_ems_evidence(
+                current
+            )
+        )
 
-            "SYMBOL": clean_symbol,
+        # -------------------------------------------------
+        # RESULT
+        # -------------------------------------------------
 
-            "TICKER": ticker,
+        result = {
 
-            "STATUS": freshness,
+            # IDENTIFICATION
+            "SYMBOL":
+                clean_symbol,
 
-            "DATA_DATE": (
+            "TICKER":
+                ticker,
+
+            "STATUS":
+                freshness,
+
+            "NSE_STATUS":
+                freshness,
+
+            "DATA_DATE":
                 last_date.strftime(
                     "%Y-%m-%d"
-                )
-            ),
+                ),
 
-            "DATA_AGE_DAYS": age_days,
+            "DATA_AGE_DAYS":
+                age_days,
 
-            "DATA_QUALITY_%": data_quality,
+            "DATA_QUALITY_%":
+                data_quality,
 
-            "SIGNAL_ALLOWED": (
-                signal_allowed
-            ),
+            "SIGNAL_ALLOWED":
+                signal_allowed,
 
             # PRICE
-            "CMP": cmp,
+            "CMP":
+                cmp,
 
-            "PREVIOUS_CLOSE": previous_close,
+            "PREVIOUS_CLOSE":
+                previous_close,
 
-            "CHANGE": change,
+            "CHANGE":
+                change,
 
-            "CHANGE_%": change_pct,
+            "CHANGE_%":
+                change_pct,
 
-            "OPEN": _safe_float(
-                current.get("Open")
-            ),
+            "OPEN":
+                _safe_float(
+                    current.get(
+                        "Open"
+                    )
+                ),
 
-            "HIGH": _safe_float(
-                current.get("High")
-            ),
+            "HIGH":
+                _safe_float(
+                    current.get(
+                        "High"
+                    )
+                ),
 
-            "LOW": _safe_float(
-                current.get("Low")
-            ),
+            "LOW":
+                _safe_float(
+                    current.get(
+                        "Low"
+                    )
+                ),
 
-            "CLOSE": cmp,
+            "CLOSE":
+                cmp,
 
-            "VOLUME": _safe_float(
-                current.get("Volume")
-            ),
+            "VOLUME":
+                _safe_float(
+                    current.get(
+                        "Volume"
+                    )
+                ),
 
-            "AVG_VOLUME_20": _safe_float(
+            "AVG_VOLUME_20":
+                _safe_float(
+                    current.get(
+                        "AVG_VOLUME_20"
+                    )
+                ),
+
+            "VOLUME_RATIO":
+                _safe_float(
+                    current.get(
+                        "VOLUME_RATIO"
+                    )
+                ),
+
+            "VOLUME_BREAKOUT":
                 current.get(
-                    "AVG_VOLUME_20"
-                )
-            ),
-
-            "VOLUME_RATIO": _safe_float(
-                current.get(
-                    "VOLUME_RATIO"
-                )
-            ),
-
-            "VOLUME_BREAKOUT": current.get(
-                "VOLUME_BREAKOUT",
-                "NO"
-            ),
+                    "VOLUME_BREAKOUT",
+                    "NO_DATA"
+                ),
 
             # 52 WEEK
-            "52W_HIGH": high_52w,
+            "52W_HIGH":
+                high_52w,
 
-            "52W_LOW": low_52w,
+            "52W_LOW":
+                low_52w,
 
-            "DISTANCE_FROM_52W_HIGH_%": (
-                (
-                    (high_52w - cmp)
-                    / high_52w
-                ) * 100
-                if high_52w
-                else 0
-            ),
+            "DISTANCE_FROM_52W_HIGH_%":
+                distance_from_high,
 
             # EMA
-            "EMA_10": _safe_float(
-                current.get("EMA_10")
-            ),
+            "EMA_10":
+                _safe_float(
+                    current.get(
+                        "EMA_10"
+                    )
+                ),
 
-            "EMA_20": _safe_float(
-                current.get("EMA_20")
-            ),
+            "EMA_20":
+                _safe_float(
+                    current.get(
+                        "EMA_20"
+                    )
+                ),
 
-            "EMA_50": _safe_float(
-                current.get("EMA_50")
-            ),
+            "EMA_50":
+                _safe_float(
+                    current.get(
+                        "EMA_50"
+                    )
+                ),
 
-            "EMA_100": _safe_float(
-                current.get("EMA_100")
-            ),
+            "EMA_100":
+                _safe_float(
+                    current.get(
+                        "EMA_100"
+                    )
+                ),
 
-            "EMA_200": _safe_float(
-                current.get("EMA_200")
-            ),
+            "EMA_200":
+                _safe_float(
+                    current.get(
+                        "EMA_200"
+                    )
+                ),
 
-            "EMA_ALIGNMENT": current.get(
-                "EMA_ALIGNMENT",
-                "MIXED"
-            ),
+            "EMA_ALIGNMENT":
+                current.get(
+                    "EMA_ALIGNMENT",
+                    "INSUFFICIENT_DATA"
+                ),
 
             # RSI
-            "RSI_14": _safe_float(
-                current.get("RSI_14"),
-                np.nan
-            ),
+            "RSI_14":
+                _safe_float(
+                    current.get(
+                        "RSI_14"
+                    )
+                ),
 
-            "RSI_STATE": current.get(
-                "RSI_STATE",
-                "NO_DATA"
-            ),
+            "RSI_STATE":
+                current.get(
+                    "RSI_STATE",
+                    "NO_DATA"
+                ),
 
             # MACD
-            "MACD": _safe_float(
-                current.get("MACD"),
-                np.nan
-            ),
-
-            "MACD_SIGNAL": _safe_float(
-                current.get(
-                    "MACD_SIGNAL"
+            "MACD":
+                _safe_float(
+                    current.get(
+                        "MACD"
+                    )
                 ),
-                np.nan
-            ),
 
-            "MACD_HIST": _safe_float(
-                current.get(
-                    "MACD_HIST"
+            "MACD_SIGNAL":
+                _safe_float(
+                    current.get(
+                        "MACD_SIGNAL"
+                    )
                 ),
-                np.nan
-            ),
 
-            "MACD_STATE": current.get(
-                "MACD_STATE",
-                "NO_DATA"
-            ),
+            "MACD_HIST":
+                _safe_float(
+                    current.get(
+                        "MACD_HIST"
+                    )
+                ),
+
+            "MACD_STATE":
+                current.get(
+                    "MACD_STATE",
+                    "NO_DATA"
+                ),
 
             # SUPERTREND
-            "SUPERTREND": _safe_float(
-                current.get(
-                    "SUPERTREND"
+            "SUPERTREND":
+                _safe_float(
+                    current.get(
+                        "SUPERTREND"
+                    )
                 ),
-                np.nan
-            ),
 
-            "SUPERTREND_STATUS": current.get(
-                "SUPERTREND_STATUS",
-                "NO_DATA"
-            ),
+            "SUPERTREND_STATUS":
+                current.get(
+                    "SUPERTREND_STATUS",
+                    "NO_DATA"
+                ),
 
             # ATR
-            "ATR_14": atr,
+            "ATR_14":
+                _safe_float(
+                    current.get(
+                        "ATR_14"
+                    )
+                ),
 
-            # SCORE
-            "TECHNICAL_SCORE": (
-                technical_score
-            ),
+            # TECHNICAL
+            "TECHNICAL_SCORE":
+                technical_score,
 
-            "TECHNICAL_ZONE": (
-                technical_zone
-            ),
+            "TECHNICAL_ZONE":
+                technical_zone,
+
+            # EMS EVIDENCE
+            **ems_evidence,
+
+            # Fundamental layer will populate these later.
+            "FUNDAMENTAL_DATA_AVAILABLE":
+                False,
+
+            "REFERENCE_MATCH":
+                "NONE",
 
         }
+
+        return result
 
     except Exception as error:
 
         return {
 
-            "SYMBOL": clean_symbol,
+            "SYMBOL":
+                clean_symbol,
 
-            "TICKER": ticker,
+            "TICKER":
+                ticker,
 
-            "STATUS": "ERROR",
+            "STATUS":
+                "ERROR",
 
-            "DATA_DATE": None,
+            "NSE_STATUS":
+                "ERROR",
 
-            "DATA_AGE_DAYS": None,
+            "DATA_DATE":
+                None,
 
-            "DATA_QUALITY_%": 0.0,
+            "DATA_AGE_DAYS":
+                None,
 
-            "SIGNAL_ALLOWED": False,
+            "DATA_QUALITY_%":
+                0.0,
 
-            "CMP": 0.0,
+            "SIGNAL_ALLOWED":
+                False,
 
-            "CHANGE": 0.0,
+            "CMP":
+                np.nan,
 
-            "CHANGE_%": 0.0,
+            "PREVIOUS_CLOSE":
+                np.nan,
 
-            "VOLUME": 0.0,
+            "CHANGE":
+                np.nan,
 
-            "AVG_VOLUME_20": 0.0,
+            "CHANGE_%":
+                np.nan,
 
-            "VOLUME_RATIO": 0.0,
+            "OPEN":
+                np.nan,
 
-            "VOLUME_BREAKOUT": "NO",
+            "HIGH":
+                np.nan,
 
-            "52W_HIGH": 0.0,
+            "LOW":
+                np.nan,
 
-            "52W_LOW": 0.0,
+            "CLOSE":
+                np.nan,
 
-            "EMA_10": 0.0,
+            "VOLUME":
+                np.nan,
 
-            "EMA_20": 0.0,
+            "AVG_VOLUME_20":
+                np.nan,
 
-            "EMA_50": 0.0,
+            "VOLUME_RATIO":
+                np.nan,
 
-            "EMA_100": 0.0,
+            "VOLUME_BREAKOUT":
+                "NO_DATA",
 
-            "EMA_200": 0.0,
+            "52W_HIGH":
+                np.nan,
 
-            "EMA_ALIGNMENT": "NO_DATA",
+            "52W_LOW":
+                np.nan,
 
-            "RSI_14": np.nan,
+            "DISTANCE_FROM_52W_HIGH_%":
+                np.nan,
 
-            "RSI_STATE": "NO_DATA",
+            "EMA_10":
+                np.nan,
 
-            "MACD": np.nan,
+            "EMA_20":
+                np.nan,
 
-            "MACD_SIGNAL": np.nan,
+            "EMA_50":
+                np.nan,
 
-            "MACD_HIST": np.nan,
+            "EMA_100":
+                np.nan,
 
-            "MACD_STATE": "NO_DATA",
+            "EMA_200":
+                np.nan,
 
-            "SUPERTREND": np.nan,
+            "EMA_ALIGNMENT":
+                "NO_DATA",
 
-            "SUPERTREND_STATUS": "NO_DATA",
+            "RSI_14":
+                np.nan,
 
-            "ATR_14": 0.0,
+            "RSI_STATE":
+                "NO_DATA",
 
-            "TECHNICAL_SCORE": 0.0,
+            "MACD":
+                np.nan,
 
-            "TECHNICAL_ZONE": "NO_DATA",
+            "MACD_SIGNAL":
+                np.nan,
 
-            "ERROR": str(error)
+            "MACD_HIST":
+                np.nan,
+
+            "MACD_STATE":
+                "NO_DATA",
+
+            "SUPERTREND":
+                np.nan,
+
+            "SUPERTREND_STATUS":
+                "NO_DATA",
+
+            "ATR_14":
+                np.nan,
+
+            "TECHNICAL_SCORE":
+                np.nan,
+
+            "TECHNICAL_ZONE":
+                "NO_DATA",
+
+            # EMS
+            "trend_breakdown":
+                None,
+
+            "momentum_breakdown":
+                None,
+
+            "support_breakdown":
+                None,
+
+            "volume_confirmation":
+                None,
+
+            "relative_strength_breakdown":
+                None,
+
+            "risk_deterioration":
+                None,
+
+            "above_exit_price":
+                None,
+
+            "ath_profit":
+                None,
+
+            "outperformance":
+                None,
+
+            "FUNDAMENTAL_DATA_AVAILABLE":
+                False,
+
+            "REFERENCE_MATCH":
+                "NONE",
+
+            "ERROR":
+                str(error),
 
         }
 
 
 # =========================================================
-# OPTIONAL DIRECT TEST
+# DIRECT TEST
 # =========================================================
 
 if __name__ == "__main__":
 
-    test_symbol = "CEMPRO"
+    TEST_SYMBOL = "CEMPRO"
 
     result = fetch_nse_data(
-        test_symbol
+        TEST_SYMBOL
+    )
+
+    print(
+        "\n"
+        + "=" * 70
+    )
+
+    print(
+        "R.S MASTER STOCK GUIDE V3"
+    )
+
+    print(
+        "NSE MARKET DATA ENGINE TEST"
+    )
+
+    print(
+        "=" * 70
     )
 
     for key, value in result.items():
@@ -1426,3 +1963,7 @@ if __name__ == "__main__":
         print(
             f"{key}: {value}"
         )
+
+    print(
+        "=" * 70
+    )
