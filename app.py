@@ -11,8 +11,6 @@ from src.fundamental_engine import fetch_fundamental_data
 from src.ems_engine import (
     evaluate_ems,
     ems_display,
-    is_exit_confirmed,
-    is_data_limited,
 )
 
 
@@ -21,10 +19,10 @@ from src.ems_engine import (
 # =========================================================
 
 st.set_page_config(
-    page_title="R.S MASTER STOCK GUIDE V2",
+    page_title="R.S MASTER STOCK GUIDE V3",
     page_icon="📈",
     layout="wide",
-    initial_sidebar_state="collapsed"
+    initial_sidebar_state="collapsed",
 )
 
 
@@ -32,7 +30,8 @@ st.set_page_config(
 # MOBILE COLOR UI
 # =========================================================
 
-st.markdown("""
+st.markdown(
+    """
 <style>
 
 .stApp {
@@ -274,7 +273,9 @@ st.markdown("""
 }
 
 </style>
-""", unsafe_allow_html=True)
+""",
+    unsafe_allow_html=True,
+)
 
 
 # =========================================================
@@ -284,7 +285,6 @@ st.markdown("""
 def safe_float(value, default=0.0):
 
     try:
-
         if value is None:
             return default
 
@@ -294,70 +294,60 @@ def safe_float(value, default=0.0):
         return float(value)
 
     except Exception:
-
         return default
 
 
 def money(value):
 
     try:
-
         if value is None or pd.isna(value):
             return "—"
 
         return f"₹{float(value):,.2f}"
 
     except Exception:
-
         return "—"
 
 
 def pct(value):
 
     try:
-
         if value is None or pd.isna(value):
             return "—"
 
         return f"{float(value):.2f}%"
 
     except Exception:
-
         return "—"
 
 
 def number(value, decimals=2):
 
     try:
-
         if value is None or pd.isna(value):
             return "—"
 
         return f"{float(value):,.{decimals}f}"
 
     except Exception:
-
         return "—"
 
 
 def integer_number(value):
 
     try:
-
         if value is None or pd.isna(value):
             return "—"
 
         return f"{float(value):,.0f}"
 
     except Exception:
-
         return "—"
 
 
 def display_value(value):
 
     try:
-
         if value is None or pd.isna(value):
             return "—"
 
@@ -838,17 +828,17 @@ def build_price_chart(
                 atr_series.iloc[-1]
             )
 
-        stop_loss = safe_float(
+        chart_stop_loss = safe_float(
             stop_loss,
             cmp - 2 * atr
         )
 
-        swing_target = safe_float(
+        chart_swing_target = safe_float(
             swing_target,
             cmp + 2 * atr
         )
 
-        long_target = safe_float(
+        chart_long_target = safe_float(
             long_target,
             cmp + 5 * atr
         )
@@ -981,18 +971,18 @@ def build_price_chart(
                 "dot"
             ),
             (
-                stop_loss,
-                f"🛑 SL ₹{stop_loss:,.2f}",
+                chart_stop_loss,
+                f"🛑 SL ₹{chart_stop_loss:,.2f}",
                 "dash"
             ),
             (
-                swing_target,
-                f"🎯 SWING ₹{swing_target:,.2f}",
+                chart_swing_target,
+                f"🎯 SWING ₹{chart_swing_target:,.2f}",
                 "dot"
             ),
             (
-                long_target,
-                f"🚀 LONG ₹{long_target:,.2f}",
+                chart_long_target,
+                f"🚀 LONG ₹{chart_long_target:,.2f}",
                 "dot"
             ),
             (
@@ -1152,9 +1142,9 @@ def build_price_chart(
 
         st.caption(
             f"📍 CMP {money(cmp)} | "
-            f"🛑 SL {money(stop_loss)} | "
-            f"🎯 Swing {money(swing_target)} | "
-            f"🚀 Long {money(long_target)}"
+            f"🛑 SL {money(chart_stop_loss)} | "
+            f"🎯 Swing {money(chart_swing_target)} | "
+            f"🚀 Long {money(chart_long_target)}"
         )
 
     except Exception as error:
@@ -1171,7 +1161,7 @@ def build_price_chart(
 
 st.markdown(
     '<div class="main-title">'
-    '📈 R.S MASTER STOCK GUIDE V2'
+    '📈 R.S MASTER STOCK GUIDE V3'
     '</div>',
     unsafe_allow_html=True
 )
@@ -1179,7 +1169,7 @@ st.markdown(
 st.markdown(
     '<div class="sub-title">'
     'NSE • Technical • Fundamental • Momentum • '
-    'Breakout • Exit Matra • Risk • Target'
+    'Breakout • E.M.S. • Risk • Target'
     '</div>',
     unsafe_allow_html=True
 )
@@ -1372,7 +1362,7 @@ for raw_symbol in portfolio["SYMBOL"]:
 
 
     # =====================================================
-    # EXIT MATRA
+    # PRICE LEVELS
     # =====================================================
 
     cmp = safe_float(
@@ -1402,227 +1392,204 @@ for raw_symbol in portfolio["SYMBOL"]:
         cmp * 1.20
     )
 
+
     # =====================================================
-# V2 LEGACY EXIT MATRA — REFERENCE ONLY
-# =====================================================
+    # V2 LEGACY EXIT MATRA — REFERENCE ONLY
+    # =====================================================
 
-legacy_exit_signal = "HOLD"
-legacy_exit_reason = "Setup active"
+    legacy_exit_signal = "HOLD"
 
-
-if cmp > 0:
-
-    if cmp <= stop_loss:
-
-        legacy_exit_signal = "EXIT"
-        legacy_exit_reason = (
-            "Stop-loss breached"
-        )
-
-    elif master_score < 30:
-
-        # IMPORTANT:
-        # Master Score is retained only as
-        # V2 reference evidence.
-        # It is NOT allowed to create
-        # an independent V3 EXIT.
-
-        legacy_exit_signal = "EXIT"
-        legacy_exit_reason = (
-            "V2 legacy Master Score weak"
-        )
-
-    elif (
-        technical_score < 35
-        and
-        fundamental_score < 35
-    ):
-
-        legacy_exit_signal = "REDUCE"
-        legacy_exit_reason = (
-            "Technical + fundamental weakness"
-        )
-
-    elif cmp >= long_target:
-
-        legacy_exit_signal = "BOOK"
-        legacy_exit_reason = (
-            "Long-term target reached"
-        )
+    legacy_exit_reason = "Setup active"
 
 
-# =====================================================
-# V3 E.M.S. — INDEPENDENT EXIT LAYER
-# =====================================================
+    if cmp > 0:
 
-ems_input = {
+        if cmp <= stop_loss:
 
-    # Master Score = CONTEXT ONLY
-    "master_score": master_score,
+            legacy_exit_signal = "EXIT"
 
-    # Existing V2 evidence
-    "trend_breakdown": (
-        technical_score < 35
-    ),
-
-    "momentum_breakdown": (
-        str(
-            result.get(
-                "MOMENTUM_LEVEL",
-                ""
+            legacy_exit_reason = (
+                "Stop-loss breached"
             )
-        ).upper()
-        in {
-            "BEARISH",
-            "WEAK",
-            "NEGATIVE"
-        }
-    ),
 
-    # Not available yet from this section
-    "support_breakdown": (
-    cmp > 0
-    and high_52 > 0
-    and (
-        cmp <= high_52 * 0.70
-    )
-),
+        elif master_score < 30:
 
-    # Not available yet from this section
-    "volume_confirmation": (
-    str(
-        result.get(
-            "VOLUME_BREAKOUT"
-        )
-    ).upper()
-    in {
-        "YES",
-        "TRUE",
-        "BREAKOUT"
+            legacy_exit_signal = "EXIT"
+
+            legacy_exit_reason = (
+                "V2 legacy Master Score weak"
+            )
+
+        elif (
+            technical_score < 35
+            and
+            fundamental_score < 35
+        ):
+
+            legacy_exit_signal = "REDUCE"
+
+            legacy_exit_reason = (
+                "Technical + fundamental weakness"
+            )
+
+        elif cmp >= long_target:
+
+            legacy_exit_signal = "BOOK"
+
+            legacy_exit_reason = (
+                "Long-term target reached"
+            )
+
+
+    # =====================================================
+    # V3 E.M.S. — INDEPENDENT EXIT LAYER
+    # =====================================================
+
+    ems_input = {
+
+        # Master Score = CONTEXT ONLY
+        "master_score": master_score,
+
+        # -------------------------------------------------
+        # STRUCTURAL EVIDENCE
+        # -------------------------------------------------
+
+        "trend_breakdown": (
+            technical_score < 35
+        ),
+
+        "momentum_breakdown": (
+            str(
+                result.get(
+                    "MOMENTUM_LEVEL",
+                    ""
+                )
+            ).upper()
+            in {
+                "BEARISH",
+                "WEAK",
+                "NEGATIVE"
+            }
+        ),
+
+        # Not mapped yet
+        "support_breakdown": None,
+
+        # Not mapped yet
+        "relative_strength_breakdown": None,
+
+        "risk_deterioration": (
+            str(
+                result.get(
+                    "RISK_LEVEL",
+                    ""
+                )
+            ).upper()
+            in {
+                "HIGH",
+                "VERY HIGH",
+                "CRITICAL",
+                "SEVERE",
+                "EXTREME"
+            }
+        ),
+
+        # -------------------------------------------------
+        # CONFIRMATION FACTOR
+        # -------------------------------------------------
+
+        "volume_confirmation": (
+            str(
+                result.get(
+                    "VOLUME_BREAKOUT",
+                    ""
+                )
+            ).upper()
+            in {
+                "YES",
+                "TRUE",
+                "BREAKOUT"
+            }
+        ),
+
+        # -------------------------------------------------
+        # NOT YET MAPPED
+        # -------------------------------------------------
+
+        "above_exit_price": None,
+
+        "ath_profit": None,
+
+        "outperformance": None,
+
+        # -------------------------------------------------
+        # LEGACY REFERENCE
+        # -------------------------------------------------
+
+        "reference_match": None,
     }
-),
-
-    # Not available yet
-    "relative_strength_breakdown": None,
-
-    # Risk deterioration requires
-    # actual V2 risk logic mapping.
-        # Relative Strength
-    # -------------------------------------------------
-    "relative_strength_breakdown": None,
-
-    # V2 Risk Level → EMS evidence
-    "risk_deterioration": (
-        str(
-            result.get(
-                "RISK_LEVEL",
-                ""
-            )
-        ).upper()
-        in {
-            "HIGH",
-            "VERY HIGH",
-            "CRITICAL",
-            "SEVERE",
-            "EXTREME"
-        }
-    ),
-
-    # Above Exit Price
-    # -------------------------------------------------
-    # Keep None until the actual V2 exit-price logic
-    # is mapped and validated.
-    "above_exit_price": None,
-
-    # ATH Profit
-    # -------------------------------------------------
-    # 52W HIGH is NOT ATH.
-    "ath_profit": None,
-
-    # Outperformance
-    # -------------------------------------------------
-    # Keep None until benchmark comparison is mapped.
-    "outperformance": None,
-
-    # Legacy V2 ExitMatra reference
-    "reference_match": None,
-}
-
-    # We do NOT guess Above Exit Price.
-    "above_exit_price": None,
-
-    # ATH Profit requires actual ATH/profit data.
-    "ath_profit": None,
-
-    # Outperformance requires benchmark comparison.
-    "outperformance": None,
-
-    # Legacy V2 result is reference only.
-    "reference_match": None,
-}
 
 
-ems_result = evaluate_ems(
-    ems_input
-)
-
-ems_ui = ems_display(
-    ems_result
-)
-
-
-# =====================================================
-# V3 FINAL EXIT STATUS
-# =====================================================
-
-ems_status = ems_result.get(
-    "status",
-    "DATA LIMITED"
-)
-
-ems_reason = ems_result.get(
-    "reason",
-    "EMS data unavailable"
-)
-
-
-# V3 decision source
-# EMS only becomes EXIT when its
-# independent evidence confirms it.
-
-if ems_status == "EXIT":
-
-    exit_signal = "EXIT"
-    exit_reason = ems_reason
-
-elif ems_status == "REDUCE":
-
-    exit_signal = "REDUCE"
-    exit_reason = ems_reason
-
-elif ems_status == "WATCH":
-
-    exit_signal = "HOLD"
-    exit_reason = (
-        "EMS WATCH — confirmation required"
+    ems_result = evaluate_ems(
+        ems_input
     )
 
-elif ems_status == "SAFE":
-
-    exit_signal = "HOLD"
-    exit_reason = (
-        "EMS SAFE — no confirmed exit"
+    ems_ui = ems_display(
+        ems_result
     )
 
-else:
 
-    exit_signal = "HOLD"
-    exit_reason = (
-        "EMS DATA LIMITED — "
-        "no exit generated"
+    # =====================================================
+    # V3 FINAL EXIT STATUS
+    # =====================================================
+
+    ems_status = ems_result.get(
+        "status",
+        "DATA LIMITED"
     )
 
-    
+    ems_reason = ems_result.get(
+        "reason",
+        "EMS data unavailable"
+    )
+
+
+    if ems_status == "EXIT":
+
+        exit_signal = "EXIT"
+
+        exit_reason = ems_reason
+
+    elif ems_status == "REDUCE":
+
+        exit_signal = "REDUCE"
+
+        exit_reason = ems_reason
+
+    elif ems_status == "WATCH":
+
+        exit_signal = "HOLD"
+
+        exit_reason = (
+            "EMS WATCH — confirmation required"
+        )
+
+    elif ems_status == "SAFE":
+
+        exit_signal = "HOLD"
+
+        exit_reason = (
+            "EMS SAFE — no confirmed exit"
+        )
+
+    else:
+
+        exit_signal = "HOLD"
+
+        exit_reason = (
+            "EMS DATA LIMITED — "
+            "no exit generated"
+        )
 
 
     # =====================================================
@@ -1734,71 +1701,66 @@ else:
         unsafe_allow_html=True
     )
 
+
     # =====================================================
-# E.M.S. — EXIT MANAGEMENT SYSTEM
-# =====================================================
+    # E.M.S.
+    # =====================================================
 
-ems_input = {
-    "master_score": master_score,
+    st.markdown(
+        f"""
+        <div class="score-card"
+             style="
+             border:1px solid {ems_ui['color']};
+             margin-top:10px;
+             ">
 
-    # V2 analysisમાંથી available values હોય ત્યારે જ આપવાના.
-    # Missing values માટે EMS DATA LIMITED આપશે.
-    "trend_breakdown": None,
-    "momentum_breakdown": None,
-    "support_breakdown": None,
-    "volume_confirmation": None,
-    "relative_strength_breakdown": None,
-    "risk_deterioration": None,
+            <div class="score-title">
+                🧠 E.M.S. V3
+            </div>
 
-    "above_exit_price": None,
-    "ath_profit": None,
-    "outperformance": None,
+            <div
+                style="
+                color:{ems_ui['color']};
+                font-size:1.25rem;
+                font-weight:950;
+                margin-top:6px;
+                "
+            >
+                {ems_ui['label']}
+            </div>
 
-    # Reference calibration
-    "reference_match": None,
-}
+            <div
+                style="
+                font-size:0.70rem;
+                opacity:0.65;
+                margin-top:6px;
+                "
+            >
+                Independent Exit Management Layer
+            </div>
 
-ems_result = evaluate_ems(ems_input)
+            <div
+                style="
+                font-size:0.68rem;
+                opacity:0.60;
+                margin-top:5px;
+                "
+            >
+                Confidence:
+                {display_value(
+                    ems_result.get("confidence")
+                )}
+                &nbsp; | &nbsp;
+                Confirmed:
+                {display_value(
+                    ems_result.get("confirmed_factors")
+                )}
+            </div>
 
-ems_ui = ems_display(ems_result)
-
-st.markdown(
-    f"""
-    <div class="score-card"
-         style="
-         border:1px solid {ems_ui['color']};
-         margin-top:10px;
-         ">
-
-        <div class="score-title">
-            🧠 E.M.S.
         </div>
-
-        <div
-            style="
-            color:{ems_ui['color']};
-            font-size:1.25rem;
-            font-weight:950;
-            margin-top:6px;
-            "
-        >
-            {ems_ui['label']}
-        </div>
-
-        <div
-            style="
-            font-size:0.70rem;
-            opacity:0.65;
-            margin-top:6px;
-            "
-        >
-            Independent Exit Management Layer
-        </div>
-
-    </div>
-    """,
-    unsafe_allow_html=True
-)
+        """,
+        unsafe_allow_html=True
+    )
 
 
     # =====================================================
@@ -2040,7 +2002,7 @@ st.markdown(
 
 
     # =====================================================
-    # RSI MACD
+    # RSI / MACD
     # =====================================================
 
     m1, m2, m3 = st.columns(3)
@@ -2145,14 +2107,22 @@ st.markdown(
 
     with v2:
 
-        st.metric(
-            "VOLUME RATIO",
-            number(
-                result.get(
-                    "VOLUME_RATIO"
-                ),
+        ratio_value = result.get(
+            "VOLUME_RATIO"
+        )
+
+        ratio_display = (
+            "—"
+            if ratio_value is None
+            else number(
+                ratio_value,
                 2
             ) + "x"
+        )
+
+        st.metric(
+            "VOLUME RATIO",
+            ratio_display
         )
 
     with v3:
@@ -2420,7 +2390,7 @@ st.markdown(
     # =====================================================
 
     share_text = f"""
-📈 R.S MASTER STOCK GUIDE V2
+📈 R.S MASTER STOCK GUIDE V3
 
 📌 STOCK: {symbol}
 CMP: {money(cmp)}
@@ -2429,6 +2399,9 @@ CHANGE: {pct(result.get("CHANGE_%"))}
 🏦 MASTER SCORE: {master_score:.1f}/100
 🎯 DECISION: {decision_text}
 {market_zone}
+
+🧠 E.M.S.: {ems_status}
+EMS REASON: {ems_reason}
 
 📈 TECHNICAL: {technical_score:.0f}/100
 🏢 FUNDAMENTAL: {fundamental_score:.0f}/100
@@ -2486,6 +2459,7 @@ DATA DATE:
             "SYMBOL": symbol,
             "MASTER_SCORE": master_score,
             "DECISION": decision,
+            "EMS": ems_status,
             "EXIT_MATRA": exit_signal,
             "ZONE": market_zone
         }
@@ -2556,6 +2530,13 @@ if all_scores:
     exit_count = int(
         (
             scores_df["DECISION"]
+            == "EXIT"
+        ).sum()
+    )
+
+    ems_exit_count = int(
+        (
+            scores_df["EMS"]
             == "EXIT"
         ).sum()
     )
@@ -2654,6 +2635,8 @@ if all_scores:
             🟠 REDUCE: {sell}
             &nbsp; | &nbsp;
             🔴 EXIT: {exit_count}
+            &nbsp; | &nbsp;
+            🧠 EMS EXIT: {ems_exit_count}
         </div>
         """,
         unsafe_allow_html=True
@@ -2681,6 +2664,7 @@ else:
 st.divider()
 
 st.caption(
-    "📈 R.S MASTER STOCK GUIDE V2 | "
-    "NSE Stock Decision System"
+    "📈 R.S MASTER STOCK GUIDE V3 | "
+    "NSE Stock Decision System | "
+    "E.M.S. Independent Exit Layer"
 )
