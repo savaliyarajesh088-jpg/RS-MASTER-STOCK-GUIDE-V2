@@ -1,6 +1,6 @@
 # =========================================================
-# 🛡️ R.S MASTER STOCK GUIDE V2
-# RISK ENGINE — FINAL V2.1
+# 🛡️ R.S MASTER STOCK GUIDE V3
+# RISK ENGINE — FINAL V3.0
 # =========================================================
 
 from __future__ import annotations
@@ -34,7 +34,6 @@ def safe_float(
 ) -> float:
 
     try:
-
         if value is None:
             return default
 
@@ -49,15 +48,14 @@ def safe_float(
         return value
 
     except Exception:
-
         return default
 
 
 def clamp(
-    value,
-    minimum=0.0,
-    maximum=100.0
-):
+    value: Any,
+    minimum: float = 0.0,
+    maximum: float = 100.0
+) -> float:
 
     value = safe_float(
         value,
@@ -78,24 +76,20 @@ def clamp(
 # =========================================================
 
 def prepare_ohlcv(
-    df
-):
+    df: pd.DataFrame
+) -> pd.DataFrame | None:
 
     if (
         df is None
-        or not isinstance(
-            df,
-            pd.DataFrame
-        )
+        or not isinstance(df, pd.DataFrame)
         or df.empty
     ):
-
         return None
 
     data = df.copy()
 
     # -----------------------------------------------------
-    # MultiIndex
+    # MultiIndex support
     # -----------------------------------------------------
 
     if isinstance(
@@ -103,10 +97,34 @@ def prepare_ohlcv(
         pd.MultiIndex
     ):
 
-        data.columns = [
-            col[0]
-            for col in data.columns
-        ]
+        columns = []
+
+        for col in data.columns:
+
+            selected = None
+
+            for item in col:
+
+                if str(item).strip().lower() in {
+                    "open",
+                    "high",
+                    "low",
+                    "close",
+                    "volume",
+                }:
+
+                    selected = str(item)
+
+                    break
+
+            if selected is None:
+                selected = str(col[0])
+
+            columns.append(
+                selected
+            )
+
+        data.columns = columns
 
     # -----------------------------------------------------
     # Normalize column names
@@ -120,7 +138,10 @@ def prepare_ohlcv(
             col
         ).strip().lower()
 
-        if name == "high":
+        if name == "open":
+            rename_map[col] = "Open"
+
+        elif name == "high":
             rename_map[col] = "High"
 
         elif name == "low":
@@ -140,7 +161,7 @@ def prepare_ohlcv(
     required = [
         "High",
         "Low",
-        "Close"
+        "Close",
     ]
 
     if not all(
@@ -150,12 +171,20 @@ def prepare_ohlcv(
 
         return None
 
-    for col in required:
+    for col in data.columns:
 
-        data[col] = pd.to_numeric(
-            data[col],
-            errors="coerce"
-        )
+        if col in {
+            "Open",
+            "High",
+            "Low",
+            "Close",
+            "Volume",
+        }:
+
+            data[col] = pd.to_numeric(
+                data[col],
+                errors="coerce"
+            )
 
     data.dropna(
         subset=required,
@@ -163,7 +192,6 @@ def prepare_ohlcv(
     )
 
     if data.empty:
-
         return None
 
     data.sort_index(
@@ -178,29 +206,24 @@ def prepare_ohlcv(
 # =========================================================
 
 def calculate_atr(
-    df,
-    period=ATR_PERIOD
-):
+    df: pd.DataFrame,
+    period: int = ATR_PERIOD
+) -> float:
 
     data = prepare_ohlcv(
         df
     )
 
     if data is None:
-
         return np.nan
 
     high = data["High"]
     low = data["Low"]
     close = data["Close"]
 
-    previous_close = (
-        close.shift(1)
-    )
+    previous_close = close.shift(1)
 
-    tr1 = (
-        high - low
-    )
+    tr1 = high - low
 
     tr2 = (
         high - previous_close
@@ -214,33 +237,26 @@ def calculate_atr(
         [
             tr1,
             tr2,
-            tr3
+            tr3,
         ],
-        axis=1
+        axis=1,
     ).max(
         axis=1
     )
-
-    # -----------------------------------------------------
-    # Wilder-style EWM ATR
-    # -----------------------------------------------------
 
     atr = (
         true_range
         .ewm(
             alpha=1 / period,
             adjust=False,
-            min_periods=period
+            min_periods=period,
         )
         .mean()
     )
 
-    valid = (
-        atr.dropna()
-    )
+    valid = atr.dropna()
 
     if valid.empty:
-
         return np.nan
 
     return safe_float(
@@ -253,9 +269,9 @@ def calculate_atr(
 # =========================================================
 
 def calculate_atr_percent(
-    cmp,
-    atr
-):
+    cmp: Any,
+    atr: Any
+) -> float:
 
     cmp = safe_float(
         cmp
@@ -289,21 +305,18 @@ def calculate_atr_percent(
 # =========================================================
 
 def calculate_volatility(
-    df,
-    period=VOLATILITY_PERIOD
-):
+    df: pd.DataFrame,
+    period: int = VOLATILITY_PERIOD
+) -> float:
 
     data = prepare_ohlcv(
         df
     )
 
     if data is None:
-
         return np.nan
 
-    close = data[
-        "Close"
-    ]
+    close = data["Close"]
 
     returns = (
         close
@@ -311,20 +324,15 @@ def calculate_volatility(
         .dropna()
     )
 
-    if len(
-        returns
-    ) < period:
-
+    if len(returns) < period:
         return np.nan
 
     volatility = (
         returns
         .tail(period)
         .std()
-        *
-        np.sqrt(252)
-        *
-        100
+        * np.sqrt(252)
+        * 100
     )
 
     return safe_float(
@@ -337,23 +345,19 @@ def calculate_volatility(
 # =========================================================
 
 def calculate_max_drawdown(
-    df
-):
+    df: pd.DataFrame
+) -> float:
 
     data = prepare_ohlcv(
         df
     )
 
     if data is None:
-
         return np.nan
 
-    close = data[
-        "Close"
-    ]
+    close = data["Close"]
 
     if close.empty:
-
         return np.nan
 
     running_high = (
@@ -380,8 +384,8 @@ def calculate_max_drawdown(
 # =========================================================
 
 def calculate_52_week_levels(
-    df
-):
+    df: pd.DataFrame
+) -> Dict[str, float]:
 
     result = {
 
@@ -393,8 +397,7 @@ def calculate_52_week_levels(
             np.nan,
 
         "DISTANCE_FROM_52W_LOW_%":
-            np.nan
-
+            np.nan,
     }
 
     data = prepare_ohlcv(
@@ -402,7 +405,6 @@ def calculate_52_week_levels(
     )
 
     if data is None:
-
         return result
 
     data = data.tail(
@@ -410,34 +412,23 @@ def calculate_52_week_levels(
     )
 
     if data.empty:
-
         return result
 
     high = safe_float(
-        data[
-            "High"
-        ].max()
+        data["High"].max()
     )
 
     low = safe_float(
-        data[
-            "Low"
-        ].min()
+        data["Low"].min()
     )
 
     cmp = safe_float(
-        data[
-            "Close"
-        ].iloc[-1]
+        data["Close"].iloc[-1]
     )
 
-    result[
-        "52W_HIGH"
-    ] = high
+    result["52W_HIGH"] = high
 
-    result[
-        "52W_LOW"
-    ] = low
+    result["52W_LOW"] = low
 
     if (
         np.isfinite(cmp)
@@ -492,16 +483,15 @@ def calculate_52_week_levels(
 # =========================================================
 
 def calculate_support_resistance(
-    df,
-    lookback=SR_LOOKBACK
-):
+    df: pd.DataFrame,
+    lookback: int = SR_LOOKBACK
+) -> Dict[str, float]:
 
     result = {
 
         "SUPPORT": np.nan,
 
-        "RESISTANCE": np.nan
-
+        "RESISTANCE": np.nan,
     }
 
     data = prepare_ohlcv(
@@ -509,7 +499,6 @@ def calculate_support_resistance(
     )
 
     if data is None:
-
         return result
 
     lookback = max(
@@ -522,23 +511,14 @@ def calculate_support_resistance(
     )
 
     if data.empty:
-
         return result
 
-    result[
-        "SUPPORT"
-    ] = safe_float(
-        data[
-            "Low"
-        ].min()
+    result["SUPPORT"] = safe_float(
+        data["Low"].min()
     )
 
-    result[
-        "RESISTANCE"
-    ] = safe_float(
-        data[
-            "High"
-        ].max()
+    result["RESISTANCE"] = safe_float(
+        data["High"].max()
     )
 
     return result
@@ -549,91 +529,76 @@ def calculate_support_resistance(
 # =========================================================
 
 def calculate_risk_score(
-    atr_percent,
-    volatility,
-    max_drawdown,
-    distance_from_high
-):
+    atr_percent: Any,
+    volatility: Any,
+    max_drawdown: Any,
+    distance_from_high: Any
+) -> float:
 
     score = 100.0
 
     valid_inputs = 0
 
-    # =====================================================
+    # -----------------------------------------------------
     # ATR RISK
-    # =====================================================
+    # -----------------------------------------------------
 
     atr_percent = safe_float(
         atr_percent
     )
 
-    if np.isfinite(
-        atr_percent
-    ):
+    if np.isfinite(atr_percent):
 
         valid_inputs += 1
 
         if atr_percent > 8:
-
             score -= 30
 
         elif atr_percent > 6:
-
             score -= 22
 
         elif atr_percent > 4:
-
             score -= 14
 
         elif atr_percent > 3:
-
             score -= 8
 
         elif atr_percent > 2:
-
             score -= 3
 
-    # =====================================================
+    # -----------------------------------------------------
     # VOLATILITY RISK
-    # =====================================================
+    # -----------------------------------------------------
 
     volatility = safe_float(
         volatility
     )
 
-    if np.isfinite(
-        volatility
-    ):
+    if np.isfinite(volatility):
 
         valid_inputs += 1
 
         if volatility > 60:
-
             score -= 25
 
         elif volatility > 45:
-
             score -= 18
 
         elif volatility > 35:
-
             score -= 12
 
         elif volatility > 25:
-
             score -= 6
 
-    # =====================================================
+    # -----------------------------------------------------
     # DRAWDOWN RISK
-    # =====================================================
+    # -----------------------------------------------------
 
     max_drawdown = safe_float(
         max_drawdown
     )
 
-    if np.isfinite(
-        max_drawdown
-    ):
+    if np.isfinite(max_drawdown):
 
         valid_inputs += 1
 
@@ -642,24 +607,20 @@ def calculate_risk_score(
         )
 
         if drawdown > 40:
-
             score -= 25
 
         elif drawdown > 30:
-
             score -= 18
 
         elif drawdown > 20:
-
             score -= 12
 
         elif drawdown > 10:
-
             score -= 6
 
-    # =====================================================
-    # 52W HIGH DISTANCE
-    # =====================================================
+    # -----------------------------------------------------
+    # DISTANCE FROM 52W HIGH
+    # -----------------------------------------------------
 
     distance_from_high = safe_float(
         distance_from_high
@@ -672,30 +633,26 @@ def calculate_risk_score(
         valid_inputs += 1
 
         if distance_from_high < -30:
-
             score -= 15
 
         elif distance_from_high < -20:
-
             score -= 10
 
         elif distance_from_high < -10:
-
             score -= 5
 
-    # =====================================================
-    # DATA SAFETY
-    # =====================================================
+    # -----------------------------------------------------
+    # NO DATA
+    # -----------------------------------------------------
 
     if valid_inputs == 0:
-
         return 50.0
 
     return round(
         clamp(
             score,
             MIN_RISK_SCORE,
-            MAX_RISK_SCORE
+            MAX_RISK_SCORE,
         ),
         1
     )
@@ -706,8 +663,8 @@ def calculate_risk_score(
 # =========================================================
 
 def get_risk_level(
-    risk_score
-):
+    risk_score: Any
+) -> str:
 
     score = safe_float(
         risk_score,
@@ -715,15 +672,12 @@ def get_risk_level(
     )
 
     if score >= 80:
-
         return "🟢 LOW"
 
     if score >= 65:
-
         return "🟡 MODERATE"
 
     if score >= 45:
-
         return "🟠 HIGH"
 
     return "🔴 VERY HIGH"
@@ -734,8 +688,8 @@ def get_risk_level(
 # =========================================================
 
 def calculate_risk_percent(
-    risk_score
-):
+    risk_score: Any
+) -> float:
 
     score = clamp(
         risk_score
@@ -752,10 +706,10 @@ def calculate_risk_percent(
 # =========================================================
 
 def calculate_stop_loss(
-    cmp,
-    atr,
-    support=np.nan
-):
+    cmp: Any,
+    atr: Any,
+    support: Any = np.nan
+) -> float:
 
     cmp = safe_float(
         cmp
@@ -769,7 +723,6 @@ def calculate_stop_loss(
         not np.isfinite(cmp)
         or cmp <= 0
     ):
-
         return np.nan
 
     # -----------------------------------------------------
@@ -843,7 +796,6 @@ def calculate_stop_loss(
         minimum_stop
     )
 
-    # Safety
     if stop >= cmp:
 
         stop = (
@@ -863,10 +815,10 @@ def calculate_stop_loss(
 # =========================================================
 
 def calculate_swing_target(
-    cmp,
-    atr,
-    resistance=np.nan
-):
+    cmp: Any,
+    atr: Any,
+    resistance: Any = np.nan
+) -> float:
 
     cmp = safe_float(
         cmp
@@ -880,7 +832,6 @@ def calculate_swing_target(
         not np.isfinite(cmp)
         or cmp <= 0
     ):
-
         return np.nan
 
     if (
@@ -931,10 +882,10 @@ def calculate_swing_target(
 # =========================================================
 
 def calculate_long_term_target(
-    cmp,
-    atr,
-    high_52=np.nan
-):
+    cmp: Any,
+    atr: Any,
+    high_52: Any = np.nan
+) -> float:
 
     cmp = safe_float(
         cmp
@@ -948,7 +899,6 @@ def calculate_long_term_target(
         not np.isfinite(cmp)
         or cmp <= 0
     ):
-
         return np.nan
 
     if (
@@ -999,10 +949,10 @@ def calculate_long_term_target(
 # =========================================================
 
 def calculate_risk_reward(
-    cmp,
-    stop_loss,
-    target
-):
+    cmp: Any,
+    stop_loss: Any,
+    target: Any
+) -> float:
 
     cmp = safe_float(
         cmp
@@ -1021,10 +971,9 @@ def calculate_risk_reward(
         for x in [
             cmp,
             stop_loss,
-            target
+            target,
         ]
     ):
-
         return np.nan
 
     risk = (
@@ -1043,13 +992,10 @@ def calculate_risk_reward(
         risk <= 0
         or reward <= 0
     ):
-
         return np.nan
 
     return round(
-        reward
-        /
-        risk,
+        reward / risk,
         2
     )
 
@@ -1059,11 +1005,11 @@ def calculate_risk_reward(
 # =========================================================
 
 def calculate_safety_gate(
-    risk_score,
-    risk_reward,
-    cmp,
-    stop_loss
-):
+    risk_score: Any,
+    risk_reward: Any,
+    cmp: Any,
+    stop_loss: Any
+) -> str:
 
     risk_score = safe_float(
         risk_score,
@@ -1082,19 +1028,17 @@ def calculate_safety_gate(
         stop_loss
     )
 
-    # =====================================================
+    # -----------------------------------------------------
     # HARD BLOCK
-    # =====================================================
+    # -----------------------------------------------------
 
     if risk_score < 30:
-
         return "🔴 BLOCKED"
 
     if (
         np.isfinite(risk_reward)
         and risk_reward < 1
     ):
-
         return "🔴 BLOCKED"
 
     if (
@@ -1102,19 +1046,16 @@ def calculate_safety_gate(
         and np.isfinite(stop_loss)
         and stop_loss >= cmp
     ):
-
         return "🔴 BLOCKED"
 
-    # =====================================================
+    # -----------------------------------------------------
     # WARNING
-    # =====================================================
+    # -----------------------------------------------------
 
     if risk_score < 45:
-
         return "🟠 CAUTION"
 
     if risk_score < 65:
-
         return "🟡 WATCH"
 
     return "🟢 SAFE"
@@ -1125,19 +1066,19 @@ def calculate_safety_gate(
 # =========================================================
 
 def calculate_risk(
-    df,
-    cmp=None,
-    support=None,
-    resistance=None
-):
-
-    # =====================================================
-    # DATA CHECK
-    # =====================================================
+    df: pd.DataFrame,
+    cmp: Any = None,
+    support: Any = None,
+    resistance: Any = None
+) -> Dict[str, Any]:
 
     data = prepare_ohlcv(
         df
     )
+
+    # =====================================================
+    # NO DATA
+    # =====================================================
 
     if data is None:
 
@@ -1187,8 +1128,7 @@ def calculate_risk(
                 "🔴 BLOCKED",
 
             "STATUS":
-                "NO_DATA"
-
+                "NO_DATA",
         }
 
     # =====================================================
@@ -1237,7 +1177,7 @@ def calculate_risk(
     )
 
     # =====================================================
-    # DRAWDOWN
+    # MAX DRAWDOWN
     # =====================================================
 
     max_drawdown = (
@@ -1247,7 +1187,7 @@ def calculate_risk(
     )
 
     # =====================================================
-    # 52W
+    # 52 WEEK
     # =====================================================
 
     week_data = (
@@ -1391,9 +1331,7 @@ def calculate_risk(
 
     status = "FRESH"
 
-    if not np.isfinite(
-        atr
-    ):
+    if not np.isfinite(atr):
 
         status = "LIMITED"
 
@@ -1507,8 +1445,7 @@ def calculate_risk(
             safety_gate,
 
         "STATUS":
-            status
-
+            status,
     }
 
 
@@ -1516,9 +1453,7 @@ def calculate_risk(
 # ALIAS
 # =========================================================
 
-run_risk_engine = (
-    calculate_risk
-)
+run_risk_engine = calculate_risk
 
 
 # =========================================================
@@ -1528,9 +1463,9 @@ run_risk_engine = (
 if __name__ == "__main__":
 
     print(
-        "🛡️ R.S MASTER STOCK GUIDE V2"
+        "🛡️ R.S MASTER STOCK GUIDE V3"
     )
 
     print(
-        "RISK ENGINE V2.1 READY"
+        "RISK ENGINE V3.0 READY"
     )
