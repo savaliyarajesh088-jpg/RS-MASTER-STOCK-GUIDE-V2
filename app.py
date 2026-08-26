@@ -1507,7 +1507,46 @@ ems_input = {
 
     # Risk deterioration requires
     # actual V2 risk logic mapping.
-    "risk_deterioration": None,
+        # Relative Strength
+    # -------------------------------------------------
+    "relative_strength_breakdown": None,
+
+    # V2 Risk Level → EMS evidence
+    "risk_deterioration": (
+        str(
+            result.get(
+                "RISK_LEVEL",
+                ""
+            )
+        ).upper()
+        in {
+            "HIGH",
+            "VERY HIGH",
+            "CRITICAL",
+            "SEVERE",
+            "EXTREME"
+        }
+    ),
+
+    # Above Exit Price
+    # -------------------------------------------------
+    # Keep None until the actual V2 exit-price logic
+    # is mapped and validated.
+    "above_exit_price": None,
+
+    # ATH Profit
+    # -------------------------------------------------
+    # 52W HIGH is NOT ATH.
+    "ath_profit": None,
+
+    # Outperformance
+    # -------------------------------------------------
+    # Keep None until benchmark comparison is mapped.
+    "outperformance": None,
+
+    # Legacy V2 ExitMatra reference
+    "reference_match": None,
+}
 
     # We do NOT guess Above Exit Price.
     "above_exit_price": None,
