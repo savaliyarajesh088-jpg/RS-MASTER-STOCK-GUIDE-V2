@@ -61,11 +61,7 @@ st.markdown(
 }
 
 .stock-card {
-    background: linear-gradient(
-        145deg,
-        #111111,
-        #080808
-    );
+    background: linear-gradient(145deg, #111111, #080808);
     border: 1px solid rgba(255,255,255,0.14);
     border-radius: 18px;
     padding: 12px;
@@ -171,6 +167,16 @@ st.markdown(
     color: #ff5570;
 }
 
+.signal-data {
+    background: linear-gradient(
+        135deg,
+        rgba(0,207,255,.16),
+        rgba(0,100,150,.06)
+    );
+    border: 1px solid #00cfff;
+    color: #00cfff;
+}
+
 .data-card {
     background: #101010;
     border: 1px solid rgba(255,255,255,0.09);
@@ -271,7 +277,6 @@ st.markdown(
     .data-value {
         font-size: 0.82rem;
     }
-
 }
 
 </style>
@@ -281,7 +286,7 @@ st.markdown(
 
 
 # =========================================================
-# HELPERS
+# SAFE HELPERS
 # =========================================================
 
 def safe_float(value, default=0.0):
@@ -293,10 +298,35 @@ def safe_float(value, default=0.0):
         if pd.isna(value):
             return default
 
-        return float(value)
+        value = float(value)
+
+        if not np.isfinite(value):
+            return default
+
+        return value
 
     except Exception:
         return default
+
+
+def optional_float(value):
+
+    try:
+        if value is None:
+            return None
+
+        if pd.isna(value):
+            return None
+
+        value = float(value)
+
+        if not np.isfinite(value):
+            return None
+
+        return value
+
+    except Exception:
+        return None
 
 
 def money(value):
@@ -396,7 +426,7 @@ def decision_style(decision):
             "#ffd740",
         )
 
-    if decision == "SELL":
+    if decision == "REDUCE":
         return (
             "🟠⚠️ REDUCE / ઘટાડો",
             "signal-reduce",
@@ -514,6 +544,25 @@ def valuation_style(value):
     return "⚪ " + text
 
 
+def ems_signal_class(status):
+
+    status = str(status).upper()
+
+    if status == "EXIT":
+        return "signal-exit"
+
+    if status == "REDUCE":
+        return "signal-reduce"
+
+    if status == "WATCH":
+        return "signal-wait"
+
+    if status == "SAFE":
+        return "signal-buy"
+
+    return "signal-data"
+
+
 # =========================================================
 # ATR
 # =========================================================
@@ -556,9 +605,7 @@ def calculate_atr(df, period=14):
         axis=1,
     ).max(axis=1)
 
-    return true_range.rolling(
-        period
-    ).mean()
+    return true_range.rolling(period).mean()
 
 
 # =========================================================
@@ -579,9 +626,7 @@ def build_price_chart(
         unsafe_allow_html=True,
     )
 
-    ticker_symbol = (
-        clean_symbol(symbol) + ".NS"
-    )
+    ticker_symbol = clean_symbol(symbol) + ".NS"
 
     try:
 
@@ -634,9 +679,7 @@ def build_price_chart(
 
             return
 
-        data = data[
-            required
-        ].copy()
+        data = data[required].copy()
 
         for col in required:
 
@@ -645,9 +688,7 @@ def build_price_chart(
                 errors="coerce",
             )
 
-        data.dropna(
-            inplace=True
-        )
+        data.dropna(inplace=True)
 
         if len(data) < 50:
 
@@ -671,15 +712,11 @@ def build_price_chart(
             200,
         ]:
 
-            data[
-                f"EMA{period}"
-            ] = (
-                close
-                .ewm(
+            data[f"EMA{period}"] = (
+                close.ewm(
                     span=period,
                     adjust=False,
-                )
-                .mean()
+                ).mean()
             )
 
         # =================================================
@@ -706,9 +743,11 @@ def build_price_chart(
         )
 
         data["RSI"] = (
-            100 -
+            100
+            -
             (
-                100 /
+                100
+                /
                 (1 + rs)
             )
         )
@@ -774,9 +813,7 @@ def build_price_chart(
         # BREAKOUT
         # =================================================
 
-        data[
-            "PREVIOUS_20_HIGH"
-        ] = (
+        data["PREVIOUS_20_HIGH"] = (
             data["High"]
             .rolling(20)
             .max()
@@ -790,10 +827,24 @@ def build_price_chart(
         )
 
         # =================================================
+        # 52 WEEK
+        # =================================================
+
+        one_year = data.tail(252)
+
+        high_52 = safe_float(
+            one_year["High"].max()
+        )
+
+        low_52 = safe_float(
+            one_year["Low"].min()
+        )
+
+        # =================================================
         # CURRENT VALUES
         # =================================================
 
-        cmp = float(
+        cmp = safe_float(
             close.iloc[-1]
         )
 
@@ -834,20 +885,6 @@ def build_price_chart(
         )
 
         # =================================================
-        # 52 WEEK
-        # =================================================
-
-        one_year = data.tail(252)
-
-        high_52 = float(
-            one_year["High"].max()
-        )
-
-        low_52 = float(
-            one_year["Low"].min()
-        )
-
-        # =================================================
         # ATR
         # =================================================
 
@@ -865,21 +902,22 @@ def build_price_chart(
 
         else:
 
-            atr = float(
-                atr_series.iloc[-1]
+            atr = safe_float(
+                atr_series.iloc[-1],
+                max(cmp * 0.02, 1),
             )
 
-        chart_stop_loss = safe_float(
+        stop_loss = safe_float(
             stop_loss,
             cmp - 2 * atr,
         )
 
-        chart_swing_target = safe_float(
+        swing_target = safe_float(
             swing_target,
             cmp + 2 * atr,
         )
 
-        chart_long_target = safe_float(
+        long_target = safe_float(
             long_target,
             cmp + 5 * atr,
         )
@@ -899,10 +937,7 @@ def build_price_chart(
             cols=1,
             shared_xaxes=True,
             vertical_spacing=0.025,
-            row_heights=[
-                0.78,
-                0.22,
-            ],
+            row_heights=[0.78, 0.22],
         )
 
         fig.add_trace(
@@ -1014,18 +1049,18 @@ def build_price_chart(
                 "dot",
             ),
             (
-                chart_stop_loss,
-                f"🛑 SL ₹{chart_stop_loss:,.2f}",
+                stop_loss,
+                f"🛑 SL ₹{stop_loss:,.2f}",
                 "dash",
             ),
             (
-                chart_swing_target,
-                f"🎯 SWING ₹{chart_swing_target:,.2f}",
+                swing_target,
+                f"🎯 SWING ₹{swing_target:,.2f}",
                 "dot",
             ),
             (
-                chart_long_target,
-                f"🚀 LONG ₹{chart_long_target:,.2f}",
+                long_target,
+                f"🚀 LONG ₹{long_target:,.2f}",
                 "dot",
             ),
             (
@@ -1042,15 +1077,17 @@ def build_price_chart(
 
         for level, label, dash in levels:
 
-            fig.add_hline(
-                y=level,
-                row=1,
-                col=1,
-                line_dash=dash,
-                line_width=1,
-                annotation_text=label,
-                annotation_position="top right",
-            )
+            if level > 0:
+
+                fig.add_hline(
+                    y=level,
+                    row=1,
+                    col=1,
+                    line_dash=dash,
+                    line_width=1,
+                    annotation_text=label,
+                    annotation_position="top right",
+                )
 
         # =================================================
         # RANGE BUTTONS
@@ -1181,9 +1218,9 @@ def build_price_chart(
 
         st.caption(
             f"📍 CMP {money(cmp)} | "
-            f"🛑 SL {money(chart_stop_loss)} | "
-            f"🎯 Swing {money(chart_swing_target)} | "
-            f"🚀 Long {money(chart_long_target)}"
+            f"🛑 SL {money(stop_loss)} | "
+            f"🎯 Swing {money(swing_target)} | "
+            f"🚀 Long {money(long_target)}"
         )
 
     except Exception as error:
@@ -1331,6 +1368,7 @@ for raw_symbol in portfolio["SYMBOL"]:
             "FUNDAMENTAL_ZONE": "DATA ERROR",
             "DATA_QUALITY_%": 0,
             "ERROR": str(error),
+            "STATUS": "ERROR",
         }
 
 
@@ -1358,11 +1396,23 @@ for raw_symbol in portfolio["SYMBOL"]:
         )
     )
 
-    risk_score = safe_float(
+    risk_score_raw = optional_float(
         result.get(
             "RISK_SCORE"
         )
     )
+
+    # -----------------------------------------------------
+    # Risk score missing => neutral contextual value
+    # -----------------------------------------------------
+
+    if risk_score_raw is None:
+
+        risk_score = 50.0
+
+    else:
+
+        risk_score = risk_score_raw
 
 
     # =====================================================
@@ -1399,22 +1449,24 @@ for raw_symbol in portfolio["SYMBOL"]:
 
     elif master_score >= 30:
 
-        decision = "SELL"
+        decision = "REDUCE"
 
     else:
 
         decision = "EXIT"
 
 
-    decision_text, decision_class, score_color = (
-        decision_style(
-            decision
-        )
+    (
+        decision_text,
+        decision_class,
+        score_color,
+    ) = decision_style(
+        decision
     )
 
 
     # =====================================================
-    # PRICE / TARGETS
+    # TARGET / RISK
     # =====================================================
 
     cmp = safe_float(
@@ -1446,69 +1498,12 @@ for raw_symbol in portfolio["SYMBOL"]:
 
 
     # =====================================================
-    # 52 WEEK DATA
-    # =====================================================
-
-    high_52 = safe_float(
-        result.get(
-            "HIGH_52W"
-        )
-    )
-
-    low_52 = safe_float(
-        result.get(
-            "LOW_52W"
-        )
-    )
-
-    if high_52 <= 0 or low_52 <= 0:
-
-        try:
-
-            chart_data = yf.download(
-                clean_symbol(symbol) + ".NS",
-                period="2y",
-                interval="1d",
-                auto_adjust=False,
-                progress=False,
-            )
-
-            if isinstance(
-                chart_data.columns,
-                pd.MultiIndex,
-            ):
-
-                chart_data.columns = [
-                    col[0]
-                    for col in chart_data.columns
-                ]
-
-            if not chart_data.empty:
-
-                high_52 = float(
-                    chart_data[
-                        "High"
-                    ].tail(252).max()
-                )
-
-                low_52 = float(
-                    chart_data[
-                        "Low"
-                    ].tail(252).min()
-                )
-
-        except Exception:
-
-            high_52 = 0.0
-            low_52 = 0.0
-
-
-    # =====================================================
     # V2 LEGACY EXIT MATRA
     # REFERENCE ONLY
     # =====================================================
 
     legacy_exit_signal = "HOLD"
+
     legacy_exit_reason = (
         "Setup active"
     )
@@ -1521,14 +1516,6 @@ for raw_symbol in portfolio["SYMBOL"]:
 
             legacy_exit_reason = (
                 "Stop-loss breached"
-            )
-
-        elif master_score < 30:
-
-            legacy_exit_signal = "EXIT"
-
-            legacy_exit_reason = (
-                "V2 legacy Master Score weak"
             )
 
         elif (
@@ -1553,71 +1540,185 @@ for raw_symbol in portfolio["SYMBOL"]:
 
 
     # =====================================================
-    # V3 E.M.S. INPUT
+    # 52 WEEK DATA FOR EMS
     # =====================================================
+
+    high_52_for_ems = None
+
+    try:
+
+        ticker_symbol = (
+            clean_symbol(symbol)
+            + ".NS"
+        )
+
+        chart_data = yf.download(
+            ticker_symbol,
+            period="2y",
+            interval="1d",
+            auto_adjust=False,
+            progress=False,
+        )
+
+        if not chart_data.empty:
+
+            if isinstance(
+                chart_data.columns,
+                pd.MultiIndex,
+            ):
+
+                chart_data.columns = [
+                    col[0]
+                    for col in chart_data.columns
+                ]
+
+            if (
+                "High"
+                in chart_data.columns
+            ):
+
+                chart_high = pd.to_numeric(
+                    chart_data["High"],
+                    errors="coerce",
+                )
+
+                one_year = (
+                    chart_high
+                    .dropna()
+                    .tail(252)
+                )
+
+                if not one_year.empty:
+
+                    high_52_for_ems = float(
+                        one_year.max()
+                    )
+
+    except Exception:
+
+        high_52_for_ems = None
+
+
+    # =====================================================
+    # V3 E.M.S.
+    # INDEPENDENT EXIT LAYER
+    # =====================================================
+
+    momentum_text = str(
+        result.get(
+            "MOMENTUM_LEVEL",
+            ""
+        )
+    ).upper().strip()
+
+
+    risk_level_text = str(
+        result.get(
+            "RISK_LEVEL",
+            ""
+        )
+    ).upper().strip()
+
+
+    volume_text = str(
+        result.get(
+            "VOLUME_BREAKOUT",
+            ""
+        )
+    ).upper().strip()
+
+
+    # -----------------------------------------------------
+    # Trend deterioration
+    # -----------------------------------------------------
+
+    trend_breakdown = (
+        technical_score < 35
+    )
+
+
+    # -----------------------------------------------------
+    # Momentum deterioration
+    # -----------------------------------------------------
+
+    momentum_breakdown = (
+        momentum_text
+        in {
+            "BEARISH",
+            "WEAK",
+            "NEGATIVE",
+        }
+    )
+
+
+    # -----------------------------------------------------
+    # Support deterioration
     #
     # IMPORTANT:
-    # Master Score = CONTEXT ONLY.
+    # 52W HIGH is NOT ATH.
+    # This is only a provisional structural
+    # distance check and is NOT called ATH.
+    # -----------------------------------------------------
+
+    support_breakdown = None
+
+    if (
+        cmp > 0
+        and high_52_for_ems is not None
+        and high_52_for_ems > 0
+    ):
+
+        support_breakdown = (
+            cmp
+            <=
+            high_52_for_ems * 0.70
+        )
+
+
+    # -----------------------------------------------------
+    # Volume confirmation
+    # -----------------------------------------------------
+
+    volume_confirmation = None
+
+    if volume_text:
+
+        if volume_text in {
+            "YES",
+            "TRUE",
+            "BREAKOUT",
+        }:
+
+            volume_confirmation = True
+
+        elif volume_text in {
+            "NO",
+            "FALSE",
+        }:
+
+            volume_confirmation = False
+
+
+    # -----------------------------------------------------
+    # Relative Strength
     #
-    # Missing V2 evidence remains None.
-    # No fabricated EXIT.
-    # =====================================================
+    # Keep None until actual benchmark comparison
+    # is mapped and validated.
+    # -----------------------------------------------------
 
-    ems_input = {
+    relative_strength_breakdown = None
 
-        "master_score":
-            master_score,
 
-        # Available V2 evidence
-        "trend_breakdown": (
-            technical_score < 35
-        ),
+    # -----------------------------------------------------
+    # Risk deterioration
+    # -----------------------------------------------------
 
-        "momentum_breakdown": (
-            str(
-                result.get(
-                    "MOMENTUM_LEVEL",
-                    "",
-                )
-            ).upper()
-            in {
-                "BEARISH",
-                "WEAK",
-                "NEGATIVE",
-            }
-        ),
+    risk_deterioration = None
 
-        "support_breakdown": (
-            cmp > 0
-            and high_52 > 0
-            and cmp <= high_52 * 0.70
-        ),
+    if risk_level_text:
 
-        "volume_confirmation": (
-            str(
-                result.get(
-                    "VOLUME_BREAKOUT"
-                )
-            ).upper()
-            in {
-                "YES",
-                "TRUE",
-                "BREAKOUT",
-            }
-        ),
-
-        # Not mapped yet
-        "relative_strength_breakdown":
-            None,
-
-        # V2 Risk → EMS evidence
-        "risk_deterioration": (
-            str(
-                result.get(
-                    "RISK_LEVEL",
-                    "",
-                )
-            ).upper()
+        risk_deterioration = (
+            risk_level_text
             in {
                 "HIGH",
                 "VERY HIGH",
@@ -1625,52 +1726,123 @@ for raw_symbol in portfolio["SYMBOL"]:
                 "SEVERE",
                 "EXTREME",
             }
-        ),
+        )
 
-        # -------------------------------------------------
-        # Above Exit Price
-        # -------------------------------------------------
-        # Keep None until actual V2 exit-price
-        # logic is mapped and validated.
+
+    # -----------------------------------------------------
+    # Above Exit Price
+    #
+    # DO NOT GUESS.
+    # -----------------------------------------------------
+
+    above_exit_price = None
+
+
+    # -----------------------------------------------------
+    # ATH Profit
+    #
+    # 52W HIGH is NOT ATH.
+    # -----------------------------------------------------
+
+    ath_profit = None
+
+
+    # -----------------------------------------------------
+    # Outperformance
+    #
+    # Requires benchmark comparison.
+    # -----------------------------------------------------
+
+    outperformance = None
+
+
+    # -----------------------------------------------------
+    # Reference calibration
+    # -----------------------------------------------------
+
+    reference_match = None
+
+
+    # =====================================================
+    # EMS INPUT
+    # =====================================================
+
+    ems_input = {
+
+        "master_score": master_score,
+
+        "trend_breakdown":
+            trend_breakdown,
+
+        "momentum_breakdown":
+            momentum_breakdown,
+
+        "support_breakdown":
+            support_breakdown,
+
+        "volume_confirmation":
+            volume_confirmation,
+
+        "relative_strength_breakdown":
+            relative_strength_breakdown,
+
+        "risk_deterioration":
+            risk_deterioration,
+
         "above_exit_price":
-            None,
+            above_exit_price,
 
-        # -------------------------------------------------
-        # ATH Profit
-        # -------------------------------------------------
-        # 52W HIGH is NOT ATH.
         "ath_profit":
-            None,
+            ath_profit,
 
-        # -------------------------------------------------
-        # Outperformance
-        # -------------------------------------------------
-        # Benchmark comparison not mapped yet.
         "outperformance":
-            None,
+            outperformance,
 
-        # Legacy reference only
         "reference_match":
-            None,
+            reference_match,
     }
 
 
     # =====================================================
-    # V3 EMS EVALUATION
+    # EVALUATE EMS ONCE
     # =====================================================
 
-    ems_result = evaluate_ems(
-        ems_input
-    )
+    try:
 
-    ems_ui = ems_display(
-        ems_result
-    )
+        ems_result = evaluate_ems(
+            ems_input
+        )
+
+    except Exception as error:
+
+        ems_result = {
+            "status": "DATA LIMITED",
+            "confidence": None,
+            "severity": "UNKNOWN",
+            "reason": (
+                "EMS engine error: "
+                + str(error)
+            ),
+            "confirmed_factors": 0,
+            "warning_factors": 0,
+            "data_limited": True,
+            "reference_match": "NONE",
+        }
 
 
-    # =====================================================
-    # V3 FINAL EXIT STATUS
-    # =====================================================
+    try:
+
+        ems_ui = ems_display(
+            ems_result
+        )
+
+    except Exception:
+
+        ems_ui = {
+            "label": "🩵 E.M.S. DATA LIMITED",
+            "color": "#00cfff",
+        }
+
 
     ems_status = str(
         ems_result.get(
@@ -1679,6 +1851,7 @@ for raw_symbol in portfolio["SYMBOL"]:
         )
     ).upper()
 
+
     ems_reason = str(
         ems_result.get(
             "reason",
@@ -1686,6 +1859,12 @@ for raw_symbol in portfolio["SYMBOL"]:
         )
     )
 
+
+    # =====================================================
+    # V3 FINAL EXIT STATUS
+    #
+    # EMS ONLY
+    # =====================================================
 
     if ems_status == "EXIT":
 
@@ -1729,8 +1908,10 @@ for raw_symbol in portfolio["SYMBOL"]:
     # MARKET ZONE
     # =====================================================
 
-    market_zone, market_class = zone_style(
-        master_score
+    market_zone, market_class = (
+        zone_style(
+            master_score
+        )
     )
 
 
@@ -1745,10 +1926,15 @@ for raw_symbol in portfolio["SYMBOL"]:
 
 
     st.markdown(
-        f'<div style="font-size:1.05rem;'
-        f'font-weight:950;margin-bottom:8px;">'
-        f'📌 {symbol}'
-        f'</div>',
+        f"""
+        <div style="
+            font-size:1.05rem;
+            font-weight:950;
+            margin-bottom:8px;
+        ">
+            📌 {symbol}
+        </div>
+        """,
         unsafe_allow_html=True,
     )
 
@@ -1763,7 +1949,7 @@ for raw_symbol in portfolio["SYMBOL"]:
 
         st.metric(
             "CMP",
-            money(cmp)
+            money(cmp),
         )
 
     with p2:
@@ -1774,7 +1960,7 @@ for raw_symbol in portfolio["SYMBOL"]:
                 result.get(
                     "CHANGE_%"
                 )
-            )
+            ),
         )
 
     with p3:
@@ -1785,7 +1971,7 @@ for raw_symbol in portfolio["SYMBOL"]:
                 result.get(
                     "MOMENTUM_LEVEL"
                 )
-            )
+            ),
         )
 
 
@@ -1821,10 +2007,15 @@ for raw_symbol in portfolio["SYMBOL"]:
                 <div
                     class="score-fill"
                     style="
-                    width:{max(
-                        0,
-                        min(master_score, 100)
-                    )}%;
+                    width:{
+                        max(
+                            0,
+                            min(
+                                master_score,
+                                100
+                            )
+                        )
+                    }%;
                     background:{score_color};
                     "
                 >
@@ -1839,45 +2030,24 @@ for raw_symbol in portfolio["SYMBOL"]:
 
 
     # =====================================================
-    # EMS
+    # EMS DISPLAY
     # =====================================================
+
+    ems_class = ems_signal_class(
+        ems_status
+    )
 
     st.markdown(
         f"""
-        <div class="score-card"
-             style="
-             border:1px solid {ems_ui['color']};
-             margin-top:10px;
-             ">
-
-            <div class="score-title">
-                🧠 E.M.S.
-            </div>
-
-            <div
-                style="
-                color:{ems_ui['color']};
-                font-size:1.25rem;
-                font-weight:950;
-                margin-top:6px;
-                "
-            >
-                {ems_ui['label']}
-            </div>
-
-            <div
-                style="
-                font-size:0.70rem;
-                opacity:0.65;
-                margin-top:6px;
-                "
-            >
-                Independent Exit Management Layer
-            </div>
-
+        <div class="signal-card {ems_class}">
+            {ems_ui["label"]}
         </div>
         """,
         unsafe_allow_html=True,
+    )
+
+    st.caption(
+        "🧠 EMS: Independent Exit Management Layer"
     )
 
 
@@ -1920,6 +2090,7 @@ for raw_symbol in portfolio["SYMBOL"]:
         unsafe_allow_html=True,
     )
 
+
     ex1, ex2 = st.columns(2)
 
     with ex1:
@@ -1932,18 +2103,16 @@ for raw_symbol in portfolio["SYMBOL"]:
 
             exit_display = "🟠 REDUCE"
 
-        elif exit_signal == "BOOK":
-
-            exit_display = "🟢 BOOK"
-
         else:
 
             exit_display = "🟢 HOLD"
 
+
         st.metric(
-            "EXIT SIGNAL",
+            "V3 EXIT SIGNAL",
             exit_display,
         )
+
 
     with ex2:
 
@@ -1954,7 +2123,31 @@ for raw_symbol in portfolio["SYMBOL"]:
 
 
     # =====================================================
-    # TARGET
+    # V2 REFERENCE
+    # =====================================================
+
+    with st.expander(
+        "📚 V2 LEGACY REFERENCE"
+    ):
+
+        st.write(
+            f"Legacy Signal: "
+            f"{legacy_exit_signal}"
+        )
+
+        st.write(
+            f"Legacy Reason: "
+            f"{legacy_exit_reason}"
+        )
+
+        st.caption(
+            "V2 legacy output is reference evidence only. "
+            "It cannot independently create V3 EXIT."
+        )
+
+
+    # =====================================================
+    # TARGET & RISK
     # =====================================================
 
     st.markdown(
@@ -1964,7 +2157,9 @@ for raw_symbol in portfolio["SYMBOL"]:
         unsafe_allow_html=True,
     )
 
+
     t1, t2, t3 = st.columns(3)
+
 
     with t1:
 
@@ -1978,6 +2173,7 @@ for raw_symbol in portfolio["SYMBOL"]:
             unsafe_allow_html=True,
         )
 
+
     with t2:
 
         st.markdown(
@@ -1989,6 +2185,7 @@ for raw_symbol in portfolio["SYMBOL"]:
             '</div>',
             unsafe_allow_html=True,
         )
+
 
     with t3:
 
@@ -2026,7 +2223,9 @@ for raw_symbol in portfolio["SYMBOL"]:
         unsafe_allow_html=True,
     )
 
+
     tc1, tc2, tc3 = st.columns(3)
+
 
     with tc1:
 
@@ -2034,6 +2233,7 @@ for raw_symbol in portfolio["SYMBOL"]:
             "TECHNICAL",
             f"{technical_score:.0f}/100",
         )
+
 
     with tc2:
 
@@ -2045,6 +2245,7 @@ for raw_symbol in portfolio["SYMBOL"]:
                 )
             ),
         )
+
 
     with tc3:
 
@@ -2067,7 +2268,11 @@ for raw_symbol in portfolio["SYMBOL"]:
         "📊 EMA 10 / 20 / 50 / 100 / 200"
     )
 
-    e1, e2, e3, e4, e5 = st.columns(5)
+
+    e1, e2, e3, e4, e5 = (
+        st.columns(5)
+    )
+
 
     with e1:
 
@@ -2077,8 +2282,9 @@ for raw_symbol in portfolio["SYMBOL"]:
                 result.get(
                     "EMA_10"
                 )
-            )
+            ),
         )
+
 
     with e2:
 
@@ -2088,8 +2294,9 @@ for raw_symbol in portfolio["SYMBOL"]:
                 result.get(
                     "EMA_20"
                 )
-            )
+            ),
         )
+
 
     with e3:
 
@@ -2099,8 +2306,9 @@ for raw_symbol in portfolio["SYMBOL"]:
                 result.get(
                     "EMA_50"
                 )
-            )
+            ),
         )
+
 
     with e4:
 
@@ -2110,8 +2318,9 @@ for raw_symbol in portfolio["SYMBOL"]:
                 result.get(
                     "EMA_100"
                 )
-            )
+            ),
         )
+
 
     with e5:
 
@@ -2121,7 +2330,7 @@ for raw_symbol in portfolio["SYMBOL"]:
                 result.get(
                     "EMA_200"
                 )
-            )
+            ),
         )
 
 
@@ -2138,11 +2347,13 @@ for raw_symbol in portfolio["SYMBOL"]:
             </div>
 
             <div class="data-value">
-                {alignment_style(
-                    result.get(
-                        "EMA_ALIGNMENT"
+                {
+                    alignment_style(
+                        result.get(
+                            "EMA_ALIGNMENT"
+                        )
                     )
-                )}
+                }
             </div>
 
         </div>
@@ -2152,10 +2363,11 @@ for raw_symbol in portfolio["SYMBOL"]:
 
 
     # =====================================================
-    # RSI / MACD
+    # RSI MACD
     # =====================================================
 
     m1, m2, m3 = st.columns(3)
+
 
     with m1:
 
@@ -2169,6 +2381,7 @@ for raw_symbol in portfolio["SYMBOL"]:
             ),
         )
 
+
     with m2:
 
         st.metric(
@@ -2180,6 +2393,7 @@ for raw_symbol in portfolio["SYMBOL"]:
                 2,
             ),
         )
+
 
     with m3:
 
@@ -2202,7 +2416,9 @@ for raw_symbol in portfolio["SYMBOL"]:
         "🧭 TREND / CPR / PIVOT"
     )
 
+
     s1, s2, s3 = st.columns(3)
+
 
     with s1:
 
@@ -2215,6 +2431,7 @@ for raw_symbol in portfolio["SYMBOL"]:
             ),
         )
 
+
     with s2:
 
         st.metric(
@@ -2225,6 +2442,7 @@ for raw_symbol in portfolio["SYMBOL"]:
                 )
             ),
         )
+
 
     with s3:
 
@@ -2244,6 +2462,7 @@ for raw_symbol in portfolio["SYMBOL"]:
 
     v1, v2, v3 = st.columns(3)
 
+
     with v1:
 
         st.metric(
@@ -2255,24 +2474,33 @@ for raw_symbol in portfolio["SYMBOL"]:
             ),
         )
 
+
     with v2:
 
-        volume_ratio_text = number(
-            result.get(
-                "VOLUME_RATIO"
-            ),
-            2,
+        volume_ratio_value = (
+            optional_float(
+                result.get(
+                    "VOLUME_RATIO"
+                )
+            )
         )
 
-        if volume_ratio_text == "—":
-            volume_ratio_text = "—"
+        if volume_ratio_value is None:
+
+            volume_ratio_display = "—"
+
         else:
-            volume_ratio_text += "x"
+
+            volume_ratio_display = (
+                f"{volume_ratio_value:.2f}x"
+            )
+
 
         st.metric(
             "VOLUME RATIO",
-            volume_ratio_text,
+            volume_ratio_display,
         )
+
 
     with v3:
 
@@ -2297,7 +2525,9 @@ for raw_symbol in portfolio["SYMBOL"]:
         unsafe_allow_html=True,
     )
 
+
     f1, f2, f3 = st.columns(3)
+
 
     with f1:
 
@@ -2305,6 +2535,7 @@ for raw_symbol in portfolio["SYMBOL"]:
             "FUNDAMENTAL",
             f"{fundamental_score:.0f}/100",
         )
+
 
     with f2:
 
@@ -2316,6 +2547,7 @@ for raw_symbol in portfolio["SYMBOL"]:
                 )
             ),
         )
+
 
     with f3:
 
@@ -2331,6 +2563,7 @@ for raw_symbol in portfolio["SYMBOL"]:
 
     f4, f5, f6 = st.columns(3)
 
+
     with f4:
 
         st.metric(
@@ -2342,6 +2575,7 @@ for raw_symbol in portfolio["SYMBOL"]:
             ),
         )
 
+
     with f5:
 
         st.metric(
@@ -2352,6 +2586,7 @@ for raw_symbol in portfolio["SYMBOL"]:
                 )
             ),
         )
+
 
     with f6:
 
@@ -2367,6 +2602,7 @@ for raw_symbol in portfolio["SYMBOL"]:
 
     f7, f8, f9 = st.columns(3)
 
+
     with f7:
 
         st.metric(
@@ -2378,6 +2614,7 @@ for raw_symbol in portfolio["SYMBOL"]:
             ),
         )
 
+
     with f8:
 
         st.metric(
@@ -2388,6 +2625,7 @@ for raw_symbol in portfolio["SYMBOL"]:
                 )
             ),
         )
+
 
     with f9:
 
@@ -2410,7 +2648,11 @@ for raw_symbol in portfolio["SYMBOL"]:
         "💰 VALUATION"
     )
 
-    q1, q2, q3, q4 = st.columns(4)
+
+    q1, q2, q3, q4 = (
+        st.columns(4)
+    )
+
 
     with q1:
 
@@ -2424,6 +2666,7 @@ for raw_symbol in portfolio["SYMBOL"]:
             ),
         )
 
+
     with q2:
 
         st.metric(
@@ -2436,6 +2679,7 @@ for raw_symbol in portfolio["SYMBOL"]:
             ),
         )
 
+
     with q3:
 
         st.metric(
@@ -2447,6 +2691,7 @@ for raw_symbol in portfolio["SYMBOL"]:
                 2,
             ),
         )
+
 
     with q4:
 
@@ -2471,14 +2716,23 @@ for raw_symbol in portfolio["SYMBOL"]:
         unsafe_allow_html=True,
     )
 
+
     r1, r2, r3 = st.columns(3)
+
 
     with r1:
 
+        risk_display = (
+            "—"
+            if risk_score_raw is None
+            else f"{risk_score:.0f}/100"
+        )
+
         st.metric(
             "RISK SCORE",
-            f"{risk_score:.0f}/100",
+            risk_display,
         )
+
 
     with r2:
 
@@ -2491,6 +2745,7 @@ for raw_symbol in portfolio["SYMBOL"]:
             ),
         )
 
+
     with r3:
 
         st.metric(
@@ -2501,6 +2756,64 @@ for raw_symbol in portfolio["SYMBOL"]:
                 )
             ),
         )
+
+
+    # =====================================================
+    # EMS DETAILS
+    # =====================================================
+
+    st.markdown(
+        '<div class="section-title">'
+        '🧠 E.M.S. DETAILS'
+        '</div>',
+        unsafe_allow_html=True,
+    )
+
+
+    ec1, ec2, ec3 = st.columns(3)
+
+
+    with ec1:
+
+        st.metric(
+            "STATUS",
+            ems_status,
+        )
+
+
+    with ec2:
+
+        confidence = ems_result.get(
+            "confidence"
+        )
+
+        st.metric(
+            "CONFIDENCE",
+            (
+                "—"
+                if confidence is None
+                else f"{confidence:.1f}%"
+            ),
+        )
+
+
+    with ec3:
+
+        st.metric(
+            "FACTORS",
+            str(
+                ems_result.get(
+                    "confirmed_factors",
+                    0,
+                )
+            ),
+        )
+
+
+    st.caption(
+        "🧠 "
+        + ems_reason
+    )
 
 
     # =====================================================
@@ -2535,13 +2848,14 @@ for raw_symbol in portfolio["SYMBOL"]:
 
 
     # =====================================================
-    # SHARE / COPY
+    # SHARE / COPY RESULT
     # =====================================================
 
     share_text = f"""
 📈 R.S MASTER STOCK GUIDE V3
 
 📌 STOCK: {symbol}
+
 CMP: {money(cmp)}
 CHANGE: {pct(result.get("CHANGE_%"))}
 
@@ -2549,19 +2863,23 @@ CHANGE: {pct(result.get("CHANGE_%"))}
 🎯 DECISION: {decision_text}
 {market_zone}
 
-🧠 E.M.S.: {exit_signal}
-EMS STATUS: {ems_status}
+🧠 E.M.S.: {ems_status}
+EMS REASON: {ems_reason}
+
+🚪 V3 EXIT: {exit_signal}
+EXIT REASON: {exit_reason}
 
 📈 TECHNICAL: {technical_score:.0f}/100
 🏢 FUNDAMENTAL: {fundamental_score:.0f}/100
-🛡️ RISK: {risk_score:.0f}/100
+🛡️ RISK: {
+    "—"
+    if risk_score_raw is None
+    else f"{risk_score:.0f}/100"
+}
 
 🎯 SWING: {money(swing_target)}
 🚀 LONG: {money(long_target)}
 🛑 STOP LOSS: {money(stop_loss)}
-
-🚪 EXIT MATRA: {exit_signal}
-REASON: {exit_reason}
 
 📊 RSI 14: {number(result.get("RSI_14"), 2)}
 📊 MACD: {number(result.get("MACD"), 2)}
@@ -2589,6 +2907,7 @@ DATA DATE:
 {display_value(result.get("DATA_DATE"))}
 """
 
+
     with st.expander(
         "📤 SHARE / COPY RESULT"
     ):
@@ -2605,23 +2924,12 @@ DATA DATE:
 
     all_scores.append(
         {
-            "SYMBOL":
-                symbol,
-
-            "MASTER_SCORE":
-                master_score,
-
-            "DECISION":
-                decision,
-
-            "EMS":
-                ems_status,
-
-            "EXIT_MATRA":
-                exit_signal,
-
-            "ZONE":
-                market_zone,
+            "SYMBOL": symbol,
+            "MASTER_SCORE": master_score,
+            "DECISION": decision,
+            "V3_EMS": ems_status,
+            "EXIT_MATRA": exit_signal,
+            "ZONE": market_zone,
         }
     )
 
@@ -2652,12 +2960,14 @@ if all_scores:
         all_scores
     )
 
+
     health = round(
         scores_df[
             "MASTER_SCORE"
         ].mean(),
         1,
     )
+
 
     buy = int(
         (
@@ -2666,12 +2976,14 @@ if all_scores:
         ).sum()
     )
 
+
     hold = int(
         (
             scores_df["DECISION"]
             == "HOLD"
         ).sum()
     )
+
 
     wait = int(
         (
@@ -2680,12 +2992,14 @@ if all_scores:
         ).sum()
     )
 
-    sell = int(
+
+    reduce_count = int(
         (
             scores_df["DECISION"]
-            == "SELL"
+            == "REDUCE"
         ).sum()
     )
+
 
     exit_count = int(
         (
@@ -2694,15 +3008,53 @@ if all_scores:
         ).sum()
     )
 
+
     ems_exit_count = int(
         (
-            scores_df["EMS"]
+            scores_df["V3_EMS"]
             == "EXIT"
         ).sum()
     )
 
 
+    ems_reduce_count = int(
+        (
+            scores_df["V3_EMS"]
+            == "REDUCE"
+        ).sum()
+    )
+
+
+    ems_watch_count = int(
+        (
+            scores_df["V3_EMS"]
+            == "WATCH"
+        ).sum()
+    )
+
+
+    ems_safe_count = int(
+        (
+            scores_df["V3_EMS"]
+            == "SAFE"
+        ).sum()
+    )
+
+
+    ems_limited_count = int(
+        (
+            scores_df["V3_EMS"]
+            == "DATA LIMITED"
+        ).sum()
+    )
+
+
+    # =====================================================
+    # SUMMARY CARDS
+    # =====================================================
+
     b1, b2, b3 = st.columns(3)
+
 
     with b1:
 
@@ -2723,6 +3075,7 @@ if all_scores:
             unsafe_allow_html=True,
         )
 
+
     with b2:
 
         health_color = (
@@ -2732,6 +3085,7 @@ if all_scores:
             if health >= 40
             else "#ff304f"
         )
+
 
         st.markdown(
             f"""
@@ -2752,6 +3106,7 @@ if all_scores:
             """,
             unsafe_allow_html=True,
         )
+
 
     with b3:
 
@@ -2776,6 +3131,10 @@ if all_scores:
         )
 
 
+    # =====================================================
+    # DECISION SUMMARY
+    # =====================================================
+
     st.markdown(
         f"""
         <div
@@ -2792,16 +3151,47 @@ if all_scores:
             &nbsp; | &nbsp;
             🟡 WAIT: {wait}
             &nbsp; | &nbsp;
-            🟠 REDUCE: {sell}
+            🟠 REDUCE: {reduce_count}
             &nbsp; | &nbsp;
             🔴 EXIT: {exit_count}
-            &nbsp; | &nbsp;
-            🧠 EMS EXIT: {ems_exit_count}
         </div>
         """,
         unsafe_allow_html=True,
     )
 
+
+    # =====================================================
+    # EMS SUMMARY
+    # =====================================================
+
+    st.markdown(
+        f"""
+        <div
+            style="
+            text-align:center;
+            margin:8px 0 12px 0;
+            font-size:0.76rem;
+            font-weight:800;
+            "
+        >
+            🧠 EMS EXIT: {ems_exit_count}
+            &nbsp; | &nbsp;
+            🟠 EMS REDUCE: {ems_reduce_count}
+            &nbsp; | &nbsp;
+            🟡 EMS WATCH: {ems_watch_count}
+            &nbsp; | &nbsp;
+            🟢 EMS SAFE: {ems_safe_count}
+            &nbsp; | &nbsp;
+            🩵 DATA LIMITED: {ems_limited_count}
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+    # =====================================================
+    # SUMMARY TABLE
+    # =====================================================
 
     st.dataframe(
         scores_df,
@@ -2826,5 +3216,5 @@ st.divider()
 st.caption(
     "📈 R.S MASTER STOCK GUIDE V3 | "
     "NSE Stock Decision System | "
-    "E.M.S. Independent Exit Layer"
+    "🧠 E.M.S. Independent Exit Layer"
 )
